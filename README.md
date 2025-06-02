@@ -24,10 +24,10 @@ This isn't just another "school assignment." It's a flex, a playground, and a po
 
 ## 🧭 Pages
 
-- 🔹 [`index.html`](public/index.html) — About Me  
-- 🔹 [`abilities.html`](public/abilities.html) — Hard & Soft Skills  
-- 🔹 [`portfolio.html`](public/portfolio.html) — Project Showcases  
-- 🔹 [`contact.html`](public/contact.html) — Contact Form + Socials
+- 🔹 [`index.html`](index.html) — About Me  
+- 🔹 [`abilities.html`](abilities.html) — Hard & Soft Skills  
+- 🔹 [`portfolio.html`](portfolio.html) — Project Showcases  
+- 🔹 [`contact.html`](contact.html) — Contact Form + Socials
 
 Each page is standalone but shares the same style, animations, and sidebar navigation.
 
