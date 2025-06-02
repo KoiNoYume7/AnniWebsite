@@ -168,3 +168,26 @@ button {
   font-weight: bold;
   margin: 0.5rem 0;
 }
+
+.project-video {
+  width: 100%;
+  max-width: 720px;
+  aspect-ratio: 16 / 9;
+  border: 2px solid #ff7b7b;
+  border-radius: 8px;
+  display: block;
+  margin: 1rem auto;
+}
+
+.project-img {
+  width: 100%;
+  max-width: 500px;
+  border: 2px solid #ff7b7b;
+  border-radius: 8px;
+  display: block;
+  margin: 1rem auto;
+}
+
+.project-img-large {
+  max-width: 720px;
+}
