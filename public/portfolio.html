@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portfolio - Akira</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
 <body>
-  <header>
+  <header data-aos="fade-down">
     <h1>Everything about Akira</h1>
   </header>
 
-  <aside class="sidebar">
+  <aside class="sidebar" data-aos="fade-left" data-aos-delay="200">
     <a href="index.html">About Me</a>
     <a href="abilities.html">Abilities</a>
     <a href="portfolio.html">Portfolio</a>
@@ -19,11 +20,11 @@
   </aside>
 
   <main>
-    <section class="box">
+    <section class="box" data-aos="fade-up">
       <h2>Portfolio</h2>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="100">
       <h3>Active Project</h3>
       <p>A project I've been working on with <a href="#">@Aryatar</a> was named “ANNIK-A”. Don’t question the name, it’s not final.</p>
       
@@ -39,14 +40,14 @@
       <p>Here you can see a little cutout where you can see a little bit, what it could be. Hint: it’s for a <strong>videogame</strong></p>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="200">
       <h3>Finished Project</h3>
       <p>This is a Project named <strong>AnniNotes</strong>, a notes app made by yours sincerely. The special thing on it is, it works with <strong>sql</strong>, <strong>markdown</strong> and even AI to help me <strong>organize</strong> things.</p>
       <img src="assets/images/AnniNotes.png" alt="AnniNotes Screenshot" class="project-img" />
       <p>Here is how the <strong>app</strong> looks right now. The most things happen in the <strong>background</strong> and there is another window to actually <strong>search</strong> and <strong>manage</strong> the notes.</p>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="300">
       <h3>Questions?</h3>
       <p>If you are interested, send me a message <a href="#">here</a></p>
     </section>
@@ -55,5 +56,16 @@
   <footer>
     <p>Akira ©2025</p>
   </footer>
+
+  <script src="js/main.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({
+      duration: 700,
+      easing: 'ease-out-cubic',
+      once: true
+    });
+  </script>
+
 </body>
 </html>

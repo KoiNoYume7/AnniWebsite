@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Everything about Akira</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
-<body>
-  <header>
+<body class="page-loaded">
+  <header data-aos="fade-down">
     <h1>Everything about Akira</h1>
   </header>
 
-  <aside class="sidebar">
+  <aside class="sidebar" data-aos="fade-left" data-aos-delay="200">
     <a href="index.html">About Me</a>
     <a href="abilities.html">Abilities</a>
     <a href="portfolio.html">Portfolio</a>
@@ -19,18 +20,19 @@
   </aside>
 
   <main>
-    <section class="box">
+    <section class="box" data-aos="fade-up">
       <h2>About Me</h2>
+      <p><span id="typed-text"></span><span id="cursor">|</span></p>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="100">
       <h3>Introduction</h3>
       <p>Hi, my name is <strong>Akira</strong>, just call me <strong>Akira</strong>.<br>
       Most people describe me as unique, strange but loyal and kind. I would also describe myself as unique and interesting. I don't like going to parties, except when artists I respect perform. I can be stubborn and have my own way to do things, but I am open and honest and respect suggestions.</p>
       <p>Now you know quite some things about me :)</p>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="200">
       <h3>Details</h3>
       <div class="details-flex">
         <ul>
@@ -47,13 +49,13 @@
       </div>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="300">
       <h3>Background</h3>
       <p>I was born in Spain, raised in Switzerland but my heart is in Japan. How come? My father comes from Spain, my mother is from Switzerland but for some reason I am attracted to Japan XD</p>
       <p>But right now I am living in <strong>Switzerland, St.Gallen</strong>.</p>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="400">
       <h3>Hobbies</h3>
       <ol>
         <li><strong>Gaming:</strong> I love to game all day, everyday. I especially love games which are open world and let your creativity be free.</li>
@@ -66,5 +68,15 @@
   <footer>
     <p>Akira ©2025</p>
   </footer>
+
+  <script src="js/main.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({
+      duration: 700,
+      easing: 'ease-out-cubic',
+      once: true
+    });
+  </script>
 </body>
 </html>

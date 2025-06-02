@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contact - Akira</title>
   <link rel="stylesheet" href="css/style.css" />
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
 </head>
 <body>
-  <header>
+  <header data-aos="fade-down">
     <h1>Everything about Akira</h1>
   </header>
 
-  <aside class="sidebar">
+  <aside class="sidebar" data-aos="fade-left" data-aos-delay="200">
     <a href="index.html">About Me</a>
     <a href="abilities.html">Abilities</a>
     <a href="portfolio.html">Portfolio</a>
@@ -19,11 +20,11 @@
   </aside>
 
   <main>
-    <section class="box">
+    <section class="box" data-aos="fade-up">
       <h2>Contact</h2>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="100">
       <h3>Send me a message</h3>
       <form>
         <label for="name">Name:</label>
@@ -39,7 +40,7 @@
       </form>
     </section>
 
-    <section class="box">
+    <section class="box" data-aos="fade-up" data-aos-delay="200">
       <h3>Find me on</h3>
       <p>Find me with the handle:</p>
       <div class="handle">KoiNoYume7</div>
@@ -55,5 +56,16 @@
   <footer>
     <p>Akira ©2025</p>
   </footer>
+
+  <script src="js/main.js"></script>
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <script>
+    AOS.init({
+      duration: 700,
+      easing: 'ease-out-cubic',
+      once: true
+    });
+  </script>
+
 </body>
 </html>
