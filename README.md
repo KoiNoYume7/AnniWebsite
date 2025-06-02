@@ -1,106 +1,66 @@
-# 🌐 AnniWebsite
+# AnniWebsite
 
-> “Started as a school project — will be my base later.”  
-> A clean, dark-themed multi-page website made to showcase everything about **Akira** a.k.a **KoiNoYume7**.
+A sleek, dark-themed personal website built for a school project — designed with **professional structure**, smooth animations, and future-ready features. This project presents **Akira** (also known online as `KoiNoYume7`) through clean design, minimalistic aesthetic, and interactive elements.
 
+## 🌐 Live Site
 
-## 🚀 Live Website
+> 🔗 [Visit on GitHub Pages](https://koinoyume7.github.io/AnniWebsite)
 
-🎯 **[Visit the site here](https://koinoyume7.github.io/AnniWebsite/)**  
-Deployed via GitHub Pages — works on desktop and mobile.
-
-
-## 📌 What Is This?
-
-AnniWebsite is a personal portfolio built from scratch using **HTML**, **CSS**, and a pinch of **JavaScript magic** ✨  
-It includes:
-- About Me
-- Technical & Soft Skills
-- Cool Projects (with live demo video!)
-- Contact section that *actually works*
-
-This isn't just another "school assignment." It's a flex, a playground, and a portfolio all in one.
-
-
-## 🧭 Pages
-
-- 🔹 [`index.html`](index.html) — About Me  
-- 🔹 [`abilities.html`](abilities.html) — Hard & Soft Skills  
-- 🔹 [`portfolio.html`](portfolio.html) — Project Showcases  
-- 🔹 [`contact.html`](contact.html) — Contact Form + Socials
-
-Each page is standalone but shares the same style, animations, and sidebar navigation.
-
-
-## 🎨 Features
-
-- 🎥 **Embedded YouTube demo** instead of heavy local video files
-- 🧠 Responsive design: auto-adapts to mobile (with folding sidebar)
-- 🌈 Fancy animations: transitions, scaling effects, and visual polish
-- 🔒 Contact form with future plans to integrate Discord DM/Webhook
-- 🧩 Modular HTML/CSS layout — perfect for growing the site
-
-
-## 📁 File Structure
-
+## 📁 Project Structure
 
 ```
 AnniWebsite
-├── public
-│ ├── abilities.html
-│ ├── assets
-│ │ └── images
-│ │ └── pfp.jpg
-│ ├── contact.html
-│ ├── css
-│ │ └── style.css
-│ ├── index.html
-│ └── portfolio.html
-└── README.md
+│   abilities.html
+│   contact.html
+│   index.html
+│   portfolio.html
+│   README.md
+│
+├───assets
+│   └───images
+│           AnniNotes.png
+│           pfp.jpg
+│
+├───css
+│       style.css
+│
+└───js
+        main.js
 ```
 
+## ✨ Features
 
-## 🛠️ Built With
+- Smooth fade-in and scroll-based animations (AOS)
+- Sidebar with active page indicator
+- Animated background with subtle movement
+- Styled scrollbar that fits the theme
+- JavaScript-powered contact form with form validation + message logging
+- Fully responsive layout for mobile and desktop
 
-- **HTML5** — structure
-- **CSS3** — styling, layout, transitions
-- **JavaScript** — interactivity (currently expanding!)
-- **YouTube Embed** — lightweight video showcase
-- **GitHub Pages** — live deployment
+## 🧠 Why It Looks Like This
 
+The site uses:
+- Box-based layout for structure and clarity
+- Gradient background for subtle motion without distraction
+- Popout hover effects and soft transitions for a modern feel
+- Clean sidebar navigation, highlighted per active page
+- Consistent sizing: base 12px font with scaled headers
 
-## ✨ To Do / Ideas
+These decisions reflect a balance between aesthetics, user experience, and performance.
 
-- [ ] Fancy JS interactions (typing animation, dark mode, modal popups)
-- [ ] Contact form via Discord webhook or bot integration
-- [ ] Animated project cards / filterable portfolio
-- [ ] Theme toggles & user customization
+## 🧪 Future Plans
 
+- Full Discord bot integration for form submissions via webhook or bot DM
+- Dynamic project portfolio powered by local data
+- Theming (light/dark toggle)
+- More background effects, particle animations, glitch headers
 
-## 🖤 Made By
+## 🖤 Created By
 
-**Akira** (`KoiNoYume7`)  
-The name says it all — built with heart, creativity, and one too many late-night coding sessions 😅
-
-You can find me on:
-- **Twitch** (🔍 `KoiNoYume7`)
+**Akira / KoiNoYume7**  
+Find me on:
 - **TikTok**
-- **Discord** — same handle
+- **Twitch**
+- **Discord**: `KoiNoYume7`
 
-
-## 💡 How to View Locally
-
-1. Clone this repo  
-   `git clone https://github.com/KoiNoYume7/AnniWebsite.git`
-
-2. Open `public/index.html` in your browser  
-   *(No build step needed — it’s pure HTML/CSS/JS magic)*
-
-
-## 📜 License
-
-MIT — use, remix, learn, improve. Just don’t claim it as yours 😎
-
-
-*This is version 1.0 — still evolving.*  
-Thanks for stopping by 💫
+> _“Started as a school project — might end as a hub for everythin ^^”_
