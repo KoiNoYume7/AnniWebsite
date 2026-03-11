@@ -15,6 +15,7 @@
 		},
 		"workbench.startupEditor": "readme",
 		"workbench.editor.restoreViewState": true,
-		"liveServer.settings.multiRootWorkspaceName": "AnniWebsite (main)"
+		"liveServer.settings.multiRootWorkspaceName": "AnniWebsite (main)",
+		"powershell.cwd": "AnniWebsite (main)"
 	}
 }

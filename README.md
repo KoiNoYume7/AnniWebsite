@@ -43,6 +43,8 @@ AnniWebsite/
 │   └── SETUP.md             # full OAuth setup guide
 ├── nginx/
 │   └── yumehana.dev.nginx   # nginx site config
+├── docs/
+│   └── AI_INSTRUCTIONS.md   # comprehensive instructions for AI/coding assistants
 ├── .gitignore
 └── README.md
 ```
@@ -91,27 +93,30 @@ node server.js     # http://127.0.0.1:4000
 
 Vite proxies `/api/*` to `:4000` automatically in dev mode.
 
+For deeper architecture + operational notes, see `docs/AI_INSTRUCTIONS.md`.
+
 ---
 
 ## Deploy on Raspberry Pi
 
+Use the deploy scripts from the repo root:
+
 ```bash
-# Build frontend
-cd client && npm run build
-
-# Copy to Pi
-scp -r dist/* akira@yme-04:/srv/storage/AnniWebsite/
-scp -r server/* akira@yme-04:/srv/storage/AnniWebsite/server/
-
-# On the Pi — install backend deps
-cd /srv/storage/AnniWebsite/server
-npm install
-
-# Set up systemd service
-sudo cp anni-website.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable anni-website --now
+# Linux/macOS
+./deploy.sh
 ```
+
+```powershell
+# Windows
+./deploy.ps1
+```
+
+Notes:
+
+- The Windows script uses `ssh`/`scp`. If your SSH key has a passphrase, use `ssh-agent` + `ssh-add` so you only type it once per session.
+- The deploy scripts preserve `server/.env` on the Pi.
+
+See `server/SETUP.md` for OAuth configuration and server setup details.
 
 See `server/SETUP.md` for full OAuth app creation guide and nginx/Cloudflare setup.
 
@@ -132,6 +137,14 @@ Browser
 - Samba accessible via **Tailscale only**
 - Backend listens on `127.0.0.1` loopback only — never directly exposed
 - UFW: deny all inbound except Tailscale interface
+
+### Stats API
+
+The status dashboard reads from a small Python API on the Pi:
+
+- Service: `anni-stats` (systemd)
+- Port: `127.0.0.1:5000`
+- nginx: proxied at `/api/stats`
 
 ---
 
