@@ -1,6 +1,14 @@
 export async function renderStatus(root) {
-  // Auth check
-  const user = sessionStorage.getItem('anni_user')
+  // ── Real session check via backend ──
+  let user = null
+  try {
+    const res = await fetch('/api/auth/me', { credentials: 'include' })
+    if (res.ok) {
+      const data = await res.json()
+      user = data.user
+    }
+  } catch (_) {}
+
   if (!user) {
     root.innerHTML = `
       <section style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:60px 20px;text-align:center">
@@ -14,7 +22,7 @@ export async function renderStatus(root) {
     return
   }
 
-  const u = JSON.parse(user)
+  const u = user
 
   root.innerHTML = `
     <section style="padding:40px 0 64px">
@@ -180,8 +188,8 @@ export async function renderStatus(root) {
   }, 1000)
 
   // Logout
-  window.doLogout = () => {
-    sessionStorage.removeItem('anni_user')
+  window.doLogout = async () => {
+    try { await fetch('/api/auth/logout', { credentials: 'include' }) } catch (_) {}
     const navBtn = document.getElementById('navLoginBtn')
     if (navBtn) { navBtn.textContent = 'Login'; navBtn.onclick = () => navigate('login') }
     import('../main.js').then(m => m.showToast('👋 Signed out'))

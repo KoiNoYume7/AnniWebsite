@@ -1,0 +1,39 @@
+# ──────────────────────────────────────────────────────────
+#  systemd service for AnniBackend
+#  Place at: /etc/systemd/system/anni-website.service
+#  Then:
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable anni-website
+#    sudo systemctl start anni-website
+#    sudo systemctl status anni-website
+# ──────────────────────────────────────────────────────────
+
+[Unit]
+Description=AnniBackend — OAuth API for yumehana.dev
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=services
+WorkingDirectory=/home/services/AnniWebsite/server
+ExecStart=/usr/bin/node server.js
+Restart=on-failure
+RestartSec=5
+
+# Load secrets from .env file
+EnvironmentFile=/home/services/AnniWebsite/server/.env
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=anni-website
+
+# Security hardening
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/home/services/AnniWebsite/server
+
+[Install]
+WantedBy=multi-user.target

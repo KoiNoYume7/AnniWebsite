@@ -1,79 +1,146 @@
 # AnniWebsite
 
-Personal website for KoiNoYume7 — project showcase, devlog, and private status dashboard.
-Live at [yumehana.dev](https://yumehana.dev).
+Personal website for **KoiNoYume7** — project showcase, devlog, status dashboard, and OAuth-protected dev tools.  
+Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
+
+---
 
 ## Stack
-- **Vite** — build tool
-- **Vanilla JS** — no framework, just clean modules
-- **DM Sans + Syne + DM Mono** — typography
-- Custom hash router, starfield, cursor effects, easter eggs
 
-## Structure
+| Layer | Tech |
+|---|---|
+| Frontend | Vite + Vanilla JS, no framework |
+| Backend | Node.js + Express |
+| Auth | OAuth (GitHub, Discord, Google) |
+| Reverse proxy | nginx |
+| Tunnel | Cloudflare Tunnel (no open inbound ports) |
+| Server | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit |
+| Storage | NTFS external drives at `/srv/storage` + `/srv/backup` |
+| VPN | Tailscale (SSH + Samba access only) |
+
+---
+
+## Repo structure
+
 ```
-src/
-  styles/
-    global.css       # CSS vars, reset, animations
-    components.css   # Buttons, cards, nav, shared UI
-  components/
-    nav.js           # Sticky nav
-    footer.js        # Footer
-  pages/
-    home.js          # Landing page
-    about.js         # Bio & skills
-    projects.js      # GitHub-fetched projects
-    blog.js          # Devlog / markdown posts
-    contact.js       # Discord webhook contact form
-    login.js         # OAuth login (GitHub / Discord / Google)
-    status.js        # Private system dashboard (auth-gated)
-  main.js            # Router, starfield, cursor, easter eggs
+AnniWebsite/
+├── client/                  # Frontend (Vite)
+│   ├── public/
+│   ├── src/
+│   │   ├── components/      # nav.js, footer.js
+│   │   ├── pages/           # home, about, projects, blog, contact, login, status
+│   │   ├── posts/           # markdown blog posts
+│   │   ├── styles/          # global.css, components.css
+│   │   └── main.js          # router, starfield, cursor, easter eggs
+│   ├── index.html
+│   ├── package.json
+│   └── vite.config.js
+├── server/                  # OAuth backend (Express)
+│   ├── server.js
+│   ├── package.json
+│   ├── .env.example         # copy to .env and fill in secrets
+│   ├── anni-website.service # systemd service file
+│   └── SETUP.md             # full OAuth setup guide
+├── nginx/
+│   └── yumehana.dev.nginx   # nginx site config
+├── .gitignore
+└── README.md
 ```
+
+---
+
+## Pages
+
+| Route | Description | Access |
+|---|---|---|
+| `#/` | Hero, projects teaser, about teaser, Discord CTA | Public |
+| `#/about` | Bio, skills, fun facts | Public |
+| `#/projects` | GitHub-fetched project cards | Public |
+| `#/blog` | Devlog with markdown posts | Public |
+| `#/contact` | Discord webhook contact form | Public |
+| `#/login` | OAuth login (GitHub / Discord / Google) | Public |
+| `#/status` | Live system dashboard | 🔒 Auth only |
+| `#/anni` | Secret page 🌸 | Hidden |
+
+---
+
+## Easter eggs
+
+- **Konami code** `↑↑↓↓←→←→BA` — activates late night mode overlay
+- **Logo click ×7** — navigates to secret `#/anni` page
+- Custom cursor with lag ring + hover expand
+- Animated starfield with parallax scroll, mouse drift, and shooting stars
+
+---
 
 ## Dev setup
+
 ```bash
+# Frontend
+cd client
 npm install
 npm run dev        # http://localhost:3000
-npm run build      # outputs to /dist
+
+# Backend (separate terminal)
+cd server
+npm install
+cp .env.example .env
+# fill in SESSION_SECRET at minimum
+node server.js     # http://127.0.0.1:4000
 ```
 
-## Deploy on RPi4
+Vite proxies `/api/*` to `:4000` automatically in dev mode.
+
+---
+
+## Deploy on Raspberry Pi
+
 ```bash
-npm run build
-sudo cp -r dist/* /var/www/html/
+# Build frontend
+cd client && npm run build
+
+# Copy to Pi
+scp -r dist/* akira@yme-04:/srv/storage/AnniWebsite/
+scp -r server/* akira@yme-04:/srv/storage/AnniWebsite/server/
+
+# On the Pi — install backend deps
+cd /srv/storage/AnniWebsite/server
+npm install
+
+# Set up systemd service
+sudo cp anni-website.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable anni-website --now
 ```
 
-## Configuration
+See `server/SETUP.md` for full OAuth app creation guide and nginx/Cloudflare setup.
 
-### Discord Webhook (contact form)
-In `src/pages/contact.js`, replace:
-```js
-const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE'
+---
+
+## Infrastructure
+
+```
+Browser
+  └── Cloudflare Tunnel (HTTPS)
+        └── nginx :80
+              ├── /          → /srv/storage/AnniWebsite/ (static files)
+              └── /api/*     → 127.0.0.1:4000 (Express backend)
+                                    └── OAuth providers
 ```
 
-### OAuth (login)
-In `src/pages/login.js`, the `startOAuth()` function currently runs in demo mode.
-For real OAuth, set up the Express backend (`/api/auth/*`) and replace the demo block
-with `window.location.href = OAUTH[provider].url`.
+- SSH accessible via **Tailscale only** (no public exposure)
+- Samba accessible via **Tailscale only**
+- Backend listens on `127.0.0.1` loopback only — never directly exposed
+- UFW: deny all inbound except Tailscale interface
 
-Backend routes needed:
-- `GET /api/auth/github` → redirect to GitHub OAuth
-- `GET /api/auth/discord` → redirect to Discord OAuth  
-- `GET /api/auth/google` → redirect to Google OAuth
-- `GET /api/auth/callback/:provider` → exchange code, set session, redirect
+---
 
-## Easter Eggs
-- **Konami code**: ↑↑↓↓←→←→BA — activates late night mode overlay
-- **Logo click ×7**: navigates to secret `/anni` page
-- **Secret route**: `/#/anni`
+## Projects featured
 
-## Status Dashboard
-The status page (`/#/status`) is auth-gated. Currently uses demo/randomized data.
-To hook up real data, create a Python/Node endpoint on the Pi that reads:
-- `/proc/stat` — CPU usage
-- `/proc/meminfo` — memory
-- `vcgencmd measure_temp` — CPU temperature
-- `df -h` — storage
-- `uptime` — uptime & load
-- `/proc/net/dev` — network traffic
+- **[AnniProxy](https://github.com/KoiNoYume7/AnniProxy)** — self-hosted proxy browser backend (WIP)
+- **[AnniWebsite](https://github.com/KoiNoYume7/AnniWebsite)** — this site (WIP)
 
-Return JSON and replace the `updateStats()` function with a `fetch('/api/stats')` call.
+---
+
+*Built late at night with Monster Energy and questionable commit timestamps.*  
+*© 2026 KoiNoYume7*
