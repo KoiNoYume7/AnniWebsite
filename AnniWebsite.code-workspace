@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"name": "AnniWebsite (main)",
+			"path": "."
+		},
+		{
+			"name": "AnniWebsite (backup)",
+			"path": "../AnniWebsite.bak"
+		}
+	],
+	"settings": {
+		"files.exclude": {
+			"**/.git": false
+		},
+		"workbench.startupEditor": "readme",
+		"workbench.editor.restoreViewState": true,
+		"liveServer.settings.multiRootWorkspaceName": "AnniWebsite (main)"
+	}
+}
