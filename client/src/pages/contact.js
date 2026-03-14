@@ -4,17 +4,17 @@ const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE'
 export async function renderContact(root) {
   root.innerHTML = `
     <section class="section">
-      <div class="wrap" style="max-width:900px">
+      <div class="wrap contact-wrap" style="max-width:900px">
         <p class="section-eyebrow reveal">Get in touch</p>
         <h1 class="section-title reveal">Contact</h1>
-        <p class="section-sub reveal" style="margin-bottom:56px">
+        <p class="section-sub reveal contact-intro" style="margin-bottom:56px">
           Send me a message — it'll land directly in my Discord DMs.
           Or just join the server and say hi.
         </p>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
+        <div class="contact-layout" style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start">
           <!-- Form -->
-          <div class="card reveal">
+          <div class="card reveal contact-form-card">
             <h2 style="font-family:var(--font-head);font-size:1.2rem;font-weight:700;margin-bottom:24px">
               Send a message
             </h2>
@@ -43,8 +43,8 @@ export async function renderContact(root) {
           </div>
 
           <!-- Other ways -->
-          <div class="reveal">
-            <div class="card" style="margin-bottom:18px">
+          <div class="reveal contact-side">
+            <div class="card contact-side-card" style="margin-bottom:18px">
               <h3 style="font-family:var(--font-head);font-weight:700;margin-bottom:16px;font-size:1rem">
                 💬 Discord Server
               </h3>
@@ -57,7 +57,7 @@ export async function renderContact(root) {
               </a>
             </div>
 
-            <div class="card" style="margin-bottom:18px">
+            <div class="card contact-side-card" style="margin-bottom:18px">
               <h3 style="font-family:var(--font-head);font-weight:700;margin-bottom:16px;font-size:1rem">
                 🐙 GitHub
               </h3>
@@ -69,7 +69,7 @@ export async function renderContact(root) {
               </a>
             </div>
 
-            <div class="card" style="background:var(--accent-dim);border-color:var(--border-h)">
+            <div class="card contact-note-card" style="background:var(--accent-dim);border-color:var(--border-h)">
               <p style="font-size:0.82rem;color:var(--muted);line-height:1.7">
                 <strong style="color:var(--accent)">Heads up:</strong> Messages from this form are
                 sent via Discord webhook directly to my server.
