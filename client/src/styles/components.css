@@ -223,3 +223,132 @@
   background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.2);
   border-radius: 50px; padding: 5px 14px; font-size: 0.78rem; font-weight: 600; color: var(--green);
 }
+
+/* ── Home ── */
+.home-projects-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)) !important;
+}
+
+@media (max-width: 980px) {
+  .home-hero {
+    padding: 108px 0 72px !important;
+  }
+
+  .home-hero-grid,
+  .home-about-grid {
+    grid-template-columns: 1fr !important;
+    gap: 40px !important;
+  }
+
+  .home-hero-terminal-wrap {
+    max-width: 680px;
+  }
+}
+
+@media (max-width: 768px) {
+  .home-status-card {
+    padding: 24px !important;
+    align-items: flex-start !important;
+  }
+
+  .home-status-meta {
+    gap: 12px !important;
+  }
+
+  .home-about-stats {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .home-discord-cta {
+    padding: 38px 24px !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .home-hero {
+    padding: 92px 0 56px !important;
+  }
+
+  .home-about-br,
+  .home-hero-sep {
+    display: none;
+  }
+
+  .home-hero-copy .section-eyebrow {
+    margin-bottom: 12px;
+  }
+
+  .home-hero-copy h1 {
+    font-size: clamp(1.95rem, 11.5vw, 2.7rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.025em !important;
+    margin-bottom: 18px !important;
+  }
+
+  .home-hero-desc {
+    max-width: none !important;
+    font-size: 0.98rem !important;
+    margin-bottom: 28px !important;
+  }
+
+  .home-hero-actions,
+  .home-hero-links {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px !important;
+  }
+
+  .home-hero-actions .btn,
+  .home-status-card .btn,
+  .home-discord-cta .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .home-hero-terminal {
+    padding: 20px !important;
+    font-size: 0.76rem !important;
+    overflow: hidden;
+  }
+
+  .home-hero-terminal #terminal-lines {
+    line-height: 1.8 !important;
+  }
+
+  .home-hero-terminal #terminal-lines div {
+    overflow-wrap: anywhere;
+  }
+
+  .project-card {
+    padding: 24px 22px;
+  }
+
+  .pc-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .home-about-grid {
+    gap: 32px !important;
+  }
+
+  .home-about-stats {
+    grid-template-columns: 1fr !important;
+  }
+
+  .home-discord-cta h2 {
+    font-size: 1.45rem !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .home-hero-copy h1 {
+    font-size: clamp(1.7rem, 10.5vw, 2.25rem) !important;
+  }
+
+  .home-hero-terminal {
+    padding: 18px 16px !important;
+    font-size: 0.68rem !important;
+  }
+}
