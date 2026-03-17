@@ -1,34 +1,34 @@
 export async function renderHome(root) {
   root.innerHTML = `
     <!-- Hero -->
-    <section style="padding:130px 0 90px;position:relative;overflow:hidden">
+    <section class="home-hero" style="padding:130px 0 90px;position:relative;overflow:hidden">
       <div class="wrap">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center">
-          <div>
+        <div class="home-hero-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center">
+          <div class="home-hero-copy">
             <p class="section-eyebrow reveal" style="animation-delay:0s">yumehana.dev</p>
             <h1 class="reveal" style="font-family:var(--font-head);font-size:clamp(2.6rem,5.5vw,4rem);font-weight:800;letter-spacing:-0.035em;line-height:1.05;margin-bottom:22px;animation-delay:0.08s">
-              Building tools<br>at <span style="color:var(--accent)">2AM</span>,<br>fuelled by <span style="color:var(--accent2)">Monster.</span>
+              Building tools<br class="home-hero-br">at <span style="color:var(--accent)">2AM</span>,<br class="home-hero-br">fuelled by <span style="color:var(--accent2)">Monster.</span>
             </h1>
-            <p class="reveal" style="color:var(--muted);font-size:1.05rem;line-height:1.75;max-width:430px;margin-bottom:36px;animation-delay:0.16s">
+            <p class="reveal home-hero-desc" style="color:var(--muted);font-size:1.05rem;line-height:1.75;max-width:430px;margin-bottom:36px;animation-delay:0.16s">
               Self-hosting everything, breaking things on purpose, and building open-source tools that actually work.
               Cybersecurity trainee by day, vibe coder by night.
             </p>
-            <div class="reveal" style="display:flex;gap:14px;flex-wrap:wrap;animation-delay:0.24s">
+            <div class="reveal home-hero-actions" style="display:flex;gap:14px;flex-wrap:wrap;animation-delay:0.24s">
               <button class="btn btn-primary" onclick="navigate('projects')">View Projects →</button>
               <button class="btn btn-ghost" onclick="navigate('about')">About me</button>
             </div>
-            <div class="reveal" style="margin-top:32px;display:flex;gap:24px;animation-delay:0.32s">
+            <div class="reveal home-hero-links" style="margin-top:32px;display:flex;gap:24px;animation-delay:0.32s">
               <a href="https://github.com/KoiNoYume7" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.82rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
                 GitHub ↗
               </a>
-              <span style="color:var(--border)">|</span>
+              <span class="home-hero-sep" style="color:var(--border)">|</span>
               <a href="https://discord.gg/anni" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.82rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted)'">
                 Discord Server ↗
               </a>
             </div>
           </div>
-          <div class="reveal" style="animation-delay:0.2s">
-            <div id="hero-terminal" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;font-family:var(--font-mono);font-size:0.82rem;box-shadow:var(--shadow)">
+          <div class="reveal home-hero-terminal-wrap" style="animation-delay:0.2s">
+            <div id="hero-terminal" class="home-hero-terminal" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;font-family:var(--font-mono);font-size:0.82rem;box-shadow:var(--shadow)">
               <div style="display:flex;gap:8px;margin-bottom:20px">
                 <div style="width:11px;height:11px;border-radius:50%;background:#ff5f57"></div>
                 <div style="width:11px;height:11px;border-radius:50%;background:#febc2e"></div>
@@ -47,8 +47,8 @@ export async function renderHome(root) {
     <!-- Status teaser -->
     <section class="section-sm">
       <div class="wrap">
-        <div class="reveal" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
-          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+        <div class="reveal home-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+          <div class="home-status-meta" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
             <div class="uptime-badge">
               <div style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>
               All systems operational
@@ -69,7 +69,7 @@ export async function renderHome(root) {
         <h2 class="section-title reveal">Featured Projects</h2>
         <p class="section-sub reveal" style="margin-bottom:52px">Open-source tools I'm actively building. All self-hosted, all real.</p>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px" id="home-projects-grid">
+        <div class="home-projects-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px" id="home-projects-grid">
           <div style="height:220px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--muted)">
             Loading projects…
           </div>
@@ -86,10 +86,10 @@ export async function renderHome(root) {
     <!-- About teaser -->
     <section class="section">
       <div class="wrap">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
+        <div class="home-about-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
           <div class="reveal">
             <p class="section-eyebrow">About</p>
-            <h2 class="section-title">The person<br>behind the keyboard</h2>
+            <h2 class="section-title">The person<br class="home-about-br">behind the keyboard</h2>
             <p style="color:var(--muted);font-size:0.97rem;line-height:1.78;margin-bottom:28px">
               Cybersecurity trainee from Switzerland. I spend my evenings self-hosting infrastructure,
               building privacy tools, and pushing commits at timestamps that would concern my doctor.
@@ -102,7 +102,7 @@ export async function renderHome(root) {
             </div>
             <button class="btn btn-ghost" onclick="navigate('about')">Read more →</button>
           </div>
-          <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div class="reveal home-about-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
             ${[
               { n: 'RPi4',  l: 'Home server' },
               { n: 'OSS',   l: 'Open source' },
@@ -124,7 +124,7 @@ export async function renderHome(root) {
     <!-- Discord CTA -->
     <section class="section-sm">
       <div class="wrap">
-        <div class="reveal" style="background:linear-gradient(135deg,rgba(88,101,242,0.12),rgba(99,210,190,0.08));border:1px solid rgba(88,101,242,0.25);border-radius:var(--radius-lg);padding:52px;text-align:center">
+        <div class="reveal home-discord-cta" style="background:linear-gradient(135deg,rgba(88,101,242,0.12),rgba(99,210,190,0.08));border:1px solid rgba(88,101,242,0.25);border-radius:var(--radius-lg);padding:52px;text-align:center">
           <div style="font-size:2.2rem;margin-bottom:16px">💬</div>
           <h2 style="font-family:var(--font-head);font-size:1.8rem;font-weight:800;letter-spacing:-0.025em;margin-bottom:12px">
             Join the Anni Projects Discord

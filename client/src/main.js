@@ -33,7 +33,17 @@ function getRoute() {
   return location.hash.replace('#/', '').replace('#', '').split('?')[0] || ''
 }
 
+function closeNavMenu() {
+  document.getElementById('navLinks')?.classList.remove('open')
+}
+
+function toggleNavMenu() {
+  document.getElementById('navLinks')?.classList.toggle('open')
+}
+
 async function navigate(to) {
+  closeNavMenu()
+
   // Normalise: undefined = read from URL, string = use that
   const raw = to !== undefined ? String(to) : getRoute()
   const hash = raw.replace(/^#\/?/, '').split('?')[0].split('/')[0]
@@ -61,6 +71,8 @@ async function navigate(to) {
 }
 
 window.navigate = navigate
+window.closeNavMenu = closeNavMenu
+window.toggleNavMenu = toggleNavMenu
 
 window.addEventListener('hashchange', () => {
   const hash = getRoute()

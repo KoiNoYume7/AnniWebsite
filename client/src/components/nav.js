@@ -6,25 +6,25 @@ export async function renderNav(root) {
   root.innerHTML = `
     <nav>
       <div class="wrap nav-inner">
-        <span class="nav-logo" onclick="navigate('')" title="click 7× for a surprise">
+        <span class="nav-logo" onclick="closeNavMenu(); navigate('')" title="click 7× for a surprise">
           KoiNoYume<span class="logo-dot">7</span>
         </span>
         <div class="nav-links" id="navLinks">
-          <button class="nav-link" data-route=""         onclick="navigate('')">Home</button>
-          <button class="nav-link" data-route="projects" onclick="navigate('projects')">Projects</button>
-          <button class="nav-link" data-route="about"    onclick="navigate('about')">About</button>
-          <button class="nav-link" data-route="blog"     onclick="navigate('blog')">Devlog</button>
-          <button class="nav-link" data-route="contact"  onclick="navigate('contact')">Contact</button>
+          <button class="nav-link" data-route=""         onclick="closeNavMenu(); navigate('')">Home</button>
+          <button class="nav-link" data-route="projects" onclick="closeNavMenu(); navigate('projects')">Projects</button>
+          <button class="nav-link" data-route="about"    onclick="closeNavMenu(); navigate('about')">About</button>
+          <button class="nav-link" data-route="blog"     onclick="closeNavMenu(); navigate('blog')">Devlog</button>
+          <button class="nav-link" data-route="contact"  onclick="closeNavMenu(); navigate('contact')">Contact</button>
         </div>
         <div class="nav-actions">
           <button class="theme-toggle" onclick="toggleTheme()">
             <span class="theme-toggle-label">${theme === 'dark' ? '☀️ Light' : '🌙 Dark'}</span>
           </button>
-          <button class="btn btn-primary btn-sm" onclick="navigate('login')" id="navLoginBtn">
+          <button class="btn btn-primary btn-sm" onclick="closeNavMenu(); navigate('login')" id="navLoginBtn">
             Login
           </button>
           <button class="nav-hamburger"
-                  onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+                  onclick="toggleNavMenu()">☰</button>
         </div>
       </div>
     </nav>`
@@ -37,7 +37,10 @@ export async function renderNav(root) {
       const btn = document.getElementById('navLoginBtn')
       if (btn) {
         btn.textContent = user.name
-        btn.onclick = () => navigate('status')
+        btn.onclick = () => {
+          closeNavMenu()
+          navigate('status')
+        }
       }
     }
   } catch (_) { /* backend not up yet, that's fine */ }
