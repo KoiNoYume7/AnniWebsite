@@ -11,7 +11,8 @@
 	],
 	"settings": {
 		"files.exclude": {
-			"**/.git": false
+			"**/.git": false,
+			"**/node_modules": true
 		},
 		"workbench.startupEditor": "readme",
 		"workbench.editor.restoreViewState": true,

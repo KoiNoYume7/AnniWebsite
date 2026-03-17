@@ -16,6 +16,13 @@ AnniWebsite is a self-hosted personal website for KoiNoYume7.
 
 Primary domain: `https://yumehana.dev`
 
+## Recent refresh (Q1 2026)
+
+- Frontend router (`client/src/main.js`) now prefetches GitHub repo data at boot, drives an upgraded starfield + cursor system, and exposes the `/anni` easter egg route (logo tap ×7). Keep those hooks intact when refactoring navigation.
+- Login UI (`client/src/pages/login.js`) performs an optimistic `/api/auth/me` check, surfaces detailed OAuth error codes, and wires logout to nav state. Preserve error keys when touching the backend because the UI expects them.
+- Status dashboard pulls richer telemetry from the Python stats API (CPU temp/load/usage, memory, storage mounts, services, fail2ban, recent logs). If you add/remove fields, update both `stats/stats.py` and `client/src/pages/status.js` together.
+- Docs/README were synced during this pass. Update both when major features land.
+
 ## Repo layout (authoritative)
 
 - `client/`
@@ -103,6 +110,22 @@ On the Pi it runs via systemd. Locally you can run:
 - `python stats.py`
 
 It reads `/proc/*` and systemd; on non-Linux hosts expect partial/empty values.
+
+### Stats payload contract
+
+`stats/stats.py` serves two endpoints:
+
+- `GET /api/stats` → JSON blob with:
+  - `uptime`, `cpu_temp`, `cpu_load`, `cpu_usage` (per core),
+  - `memory` (totals + swap),
+  - `storage` (system + `/srv/storage` + `/srv/backup`),
+  - `network` (rx/tx totals + moving rates),
+  - `services` (nginx, tailscaled, smbd, cloudflared, fail2ban, anni-website, anni-stats),
+  - `fail2ban` (current + total bans),
+  - `logs` (nginx access + `journalctl` excerpt).
+- `GET /api/stats/health` → lightweight availability check.
+
+Whenever you add fields, update both this doc and the status page renderer so cards don’t break.
 
 ## Deployment
 

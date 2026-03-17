@@ -9,7 +9,7 @@ Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
 
 | Layer | Tech |
 |---|---|
-| Frontend | Vite + Vanilla JS, no framework |
+| Frontend | Vite + Vanilla JS (SPA) |
 | Backend | Node.js + Express |
 | Auth | OAuth (GitHub, Discord, Google) |
 | Reverse proxy | nginx |
@@ -41,10 +41,15 @@ AnniWebsite/
 │   ├── .env.example         # copy to .env and fill in secrets
 │   ├── anni-website.service # systemd service file
 │   └── SETUP.md             # full OAuth setup guide
+├── stats/                   # Python status API (stats.py + systemd unit)
+│   ├── stats.py
+│   └── anni-stats.service
 ├── nginx/
 │   └── yumehana.dev.nginx   # nginx site config
 ├── docs/
 │   └── AI_INSTRUCTIONS.md   # comprehensive instructions for AI/coding assistants
+├── deploy.sh                # rsync-based deploy helper (Unix/macOS)
+├── deploy.ps1               # ssh/scp deploy helper (Windows)
 ├── .gitignore
 └── README.md
 ```
@@ -61,8 +66,8 @@ AnniWebsite/
 | `#/blog` | Devlog with markdown posts | Public |
 | `#/contact` | Discord webhook contact form | Public |
 | `#/login` | OAuth login (GitHub / Discord / Google) | Public |
-| `#/status` | Live system dashboard | 🔒 Auth only |
-| `#/anni` | Secret page 🌸 | Hidden |
+| `#/status` | Live system dashboard | Auth only |
+| `#/anni` | Secret page | Hidden |
 
 ---
 
@@ -81,7 +86,7 @@ AnniWebsite/
 # Frontend
 cd client
 npm install
-npm run dev        # http://localhost:3000
+npm run dev        # http://localhost:5173 by default
 
 # Backend (separate terminal)
 cd server
@@ -89,9 +94,13 @@ npm install
 cp .env.example .env
 # fill in SESSION_SECRET at minimum
 node server.js     # http://127.0.0.1:4000
+
+# Optional: Stats API (for status page data when testing locally)
+cd stats
+python stats.py    # http://127.0.0.1:5000
 ```
 
-Vite proxies `/api/*` to `:4000` automatically in dev mode.
+Vite proxies `/api/*` to `:4000` automatically in dev mode and the status page calls `/api/stats` if the Python service is running.
 
 For deeper architecture + operational notes, see `docs/AI_INSTRUCTIONS.md`.
 
@@ -155,5 +164,12 @@ The status dashboard reads from a small Python API on the Pi:
 
 ---
 
+## Contributors & friends of the project
+
+- **KoiNoYume7** — original author, design/dev, hosting
+- **[SpizzyCoder](https://github.com/SpizzyCoder)** — constributer and good friend, thanks for all the help <3
+
+---
+
 *Built late at night with Monster Energy and questionable commit timestamps.*  
-*© 2026 KoiNoYume7*
+* 2026 KoiNoYume7*
