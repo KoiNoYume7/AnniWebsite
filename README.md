@@ -1,6 +1,6 @@
 # AnniWebsite
 
-Personal website + AI life organizer for **KoiNoYume7** — project showcase, devlog, and OAuth-protected Organizer dashboard.
+Personal website + AI life organizer for **KoiNoYume7**.
 Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
 
 ---
@@ -9,7 +9,7 @@ Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
 
 | Layer | Tech |
 |---|---|
-| Frontend | Vite + Vanilla JS (SPA) |
+| Frontend | Vite + Vanilla JS (SPA, no framework) |
 | Backend | Node.js + Express |
 | Database | SQLite via `better-sqlite3` |
 | Auth | OAuth (GitHub, Discord, Google) — open registration, role-based |
@@ -25,37 +25,74 @@ Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
 
 ```
 AnniWebsite/
-├── client/                  # Frontend (Vite)
-│   ├── public/
-│   ├── src/
-│   │   ├── components/      # nav.js, footer.js
-│   │   ├── pages/           # home, about, projects, blog, contact, login, status, organizer
-│   │   ├── posts/           # markdown blog posts
-│   │   ├── styles/          # global.css, components.css
-│   │   └── main.js          # router, starfield, cursor, easter eggs
+├── client/                        # Frontend (Vite)
 │   ├── index.html
-│   ├── package.json
-│   └── vite.config.js
-├── server/                  # OAuth + Organizer backend (Express)
-│   ├── server.js
+│   ├── public/
+│   └── src/
+│       ├── main.js                # Thin entry — wires lib/, effects/, pages/
+│       ├── lib/                   # Pure logic modules
+│       │   ├── router.js          # Hash-based SPA router
+│       │   ├── toast.js           # showToast utility
+│       │   ├── theme.js           # Dark/light theme
+│       │   └── meta.js            # /api/meta + dev banner
+│       ├── effects/               # Visual DOM effects
+│       │   ├── starfield.js       # Parallax starfield canvas
+│       │   ├── cursor.js          # Custom cursor + ring
+│       │   └── easter-eggs.js     # Konami code, logo ×7, /anni route
+│       ├── components/            # Shared UI
+│       │   ├── nav.js
+│       │   └── footer.js
+│       ├── pages/                 # Site pages (one file per route)
+│       │   ├── home.js            # Organizer-first hero + projects
+│       │   ├── about.js
+│       │   ├── projects.js
+│       │   ├── blog.js
+│       │   ├── contact.js
+│       │   ├── login.js
+│       │   └── status.js          # Admin-only Pi dashboard
+│       ├── organizer/             # Self-contained organizer module
+│       │   ├── index.js           # Entry point — auth check + shell render
+│       │   ├── lib/
+│       │   │   ├── api.js         # All organizer fetch calls
+│       │   │   └── tier.js        # TAB_CONFIG, TIER_LIMITS, helpers
+│       │   ├── components/
+│       │   │   └── sidebar.js     # Sidebar HTML builder
+│       │   └── tabs/              # One file per tab — drop new ones in here
+│       │       ├── todos.js
+│       │       ├── calendar.js
+│       │       ├── reminders.js
+│       │       ├── finance.js
+│       │       └── ai-chat.js
+│       ├── posts/                 # Markdown blog posts
+│       └── styles/
+│           ├── global.css         # Tokens, reset, animations, dev banner
+│           ├── components.css     # Shared: buttons, cards, nav, footer, forms
+│           ├── organizer.css      # All organizer-specific styles
+│           └── pages/             # Page-specific responsive rules
+│               ├── home.css
+│               ├── about.css
+│               └── contact.css
+├── server/                        # Express backend
+│   ├── server.js                  # Setup, middleware, auth routes
 │   ├── db/
-│   │   ├── db.js            # SQLite init, WAL + FK pragmas
-│   │   └── schema.sql       # full schema (users, todos, events, reminders, finance, ai_usage)
-│   ├── package.json
-│   ├── .env.example         # copy to .env and fill in secrets
-│   ├── anni-website.service # systemd service file
-│   └── SETUP.md             # full OAuth + server setup guide
-├── stats/                   # Python status API (stats.py + systemd unit)
+│   │   ├── db.js                  # SQLite singleton (WAL + FK)
+│   │   └── schema.sql             # Full schema
+│   ├── routes/                    # Route modules — drop Phase 2+ here
+│   │   └── user.js                # /api/user/*
+│   ├── .env.example
+│   ├── anni-website.service       # systemd unit
+│   └── SETUP.md
+├── stats/                         # Python Pi stats API
 │   ├── stats.py
 │   └── anni-stats.service
 ├── nginx/
-│   └── yumehana.dev.nginx   # nginx site config
+│   └── yumehana.dev.nginx
 ├── docs/
-│   ├── AI_INSTRUCTIONS.md   # instructions for AI/coding assistants
-│   └── TODO.md              # organizer development roadmap + phase tracker
-├── deploy.sh                # rsync-based deploy helper (Unix/macOS)
-├── deploy.ps1               # ssh/scp deploy helper (Windows)
-├── .gitignore
+│   ├── AI_INSTRUCTIONS.md         # Instructions for AI/coding assistants
+│   ├── TODO.md                    # Organizer roadmap + phase tracker
+│   └── IDEAS.md                   # Unstructured future ideas (Spotify, etc.)
+├── deploy.sh
+├── deploy.ps1
 └── README.md
 ```
 
@@ -65,7 +102,7 @@ AnniWebsite/
 
 | Route | Description | Access |
 |---|---|---|
-| `#/` | Hero, projects teaser, about teaser, Discord CTA | Public |
+| `#/` | Organizer-first hero, feature grid, projects, Discord CTA | Public |
 | `#/about` | Bio, skills, fun facts | Public |
 | `#/projects` | GitHub-fetched project cards | Public |
 | `#/blog` | Devlog with markdown posts | Public |
@@ -79,24 +116,33 @@ AnniWebsite/
 
 ## Organizer
 
-The Organizer is a self-hosted life OS built into the site. Phases:
+The Organizer is the main product — a self-hosted personal life OS.
 
 | Phase | Feature | Status |
 |---|---|---|
 | 0 | Database, open-auth, SQLite sessions, nginx `/api/*` | ✅ Done |
 | 1 | Organizer shell — sidebar, tabs, user profile, token bar | ✅ Done |
-| 2 | Todos, Calendar (FullCalendar), Reminders, Finance tracker | 🔨 Next |
-| 3 | Claude AI integration — streaming chat, context injection, per-user token budgets | 📋 Planned |
-| 4 | Stripe billing — Basic ($5/mo / 200K tokens), Pro ($15/mo / 1M tokens) | 📋 Planned |
-| 5 | Data export, web push, email reminders, admin panel, rate limiting | 📋 Planned |
+| 2 | Todos, Calendar, Reminders, Finance tracker | 🔨 Next |
+| 3 | Claude AI — streaming chat, context injection, token budgets | 📋 Planned |
+| 4 | Stripe — Basic ($5/mo / 200K tokens), Pro ($15/mo / 1M tokens) | 📋 Planned |
+| 5 | Data export, web push, email reminders, admin panel | 📋 Planned |
 
 See `docs/TODO.md` for full implementation detail.
+
+### Adding a new organizer tab (Phase 2+)
+
+1. Create `client/src/organizer/tabs/your-tab.js` — export `render(user)` returning HTML
+2. Register it in `client/src/organizer/index.js` → `TAB_RENDERERS`
+3. Add the entry to `TAB_CONFIG` in `client/src/organizer/lib/tier.js`
+4. Create backend routes in `server/routes/organizer/your-tab.js`, register in `server.js`
+
+No other files need to change.
 
 ---
 
 ## Easter eggs
 
-- **Konami code** `↑↑↓↓←→←→BA` — activates late night mode overlay
+- **Konami code** `↑↑↓↓←→←→BA` — late night mode overlay
 - **Logo click ×7** — navigates to secret `#/anni` page
 - Custom cursor with lag ring + hover expand
 - Animated starfield with parallax scroll, mouse drift, and shooting stars
@@ -107,48 +153,37 @@ See `docs/TODO.md` for full implementation detail.
 
 ```bash
 # Frontend
-cd client
-npm install
-npm run dev        # http://localhost:5173 (Vite proxies /api/* → :4000)
+cd client && npm install && npm run dev
+# → http://localhost:3000 (proxies /api/* to :4000)
 
 # Backend (separate terminal)
-cd server
-npm install
-cp .env.example .env
-# Fill in SESSION_SECRET at minimum; set DEV_MODE=true to enable dev login bypass
-node server.js     # http://127.0.0.1:4000
+cd server && npm install
+cp .env.example .env   # set SESSION_SECRET + DEV_MODE=true
+node server.js         # → http://127.0.0.1:4000
 
-# Optional: Stats API (for status page data when testing locally)
-cd stats
-python stats.py    # http://127.0.0.1:5000
+# Stats API (optional — only needed for #/status page)
+python stats/stats.py  # → http://127.0.0.1:5000
 ```
 
 ### Dev login (bypass OAuth locally)
 
-When `DEV_MODE=true` in `server/.env`, a **Dev Login** button appears on the login page. Clicking it calls `POST /api/dev/login` and creates an admin session without going through GitHub/Discord/Google. This is the intended way to develop and test the Organizer locally — OAuth callback URLs are tied to the production domain so real OAuth won't work on localhost.
+OAuth callback URLs point to the production domain. On localhost, use dev login instead:
+
+1. Set `DEV_MODE=true` in `server/.env`
+2. Go to `#/login` — a **Dev Login** button appears
+3. Click → `POST /api/dev/login` → admin session → redirected to `#/organizer`
 
 ---
 
-## Deploy on Raspberry Pi
-
-Use the deploy scripts from the repo root:
+## Deploy
 
 ```bash
-# Linux/macOS
-./deploy.sh
+./deploy.sh    # Linux/macOS — rsync + systemctl restart
+./deploy.ps1   # Windows — ssh/scp
 ```
 
-```powershell
-# Windows
-./deploy.ps1
-```
-
-Notes:
-
-- The Windows script uses `ssh`/`scp`. If your SSH key has a passphrase, use `ssh-agent` + `ssh-add` so you only type it once per session.
-- The deploy scripts preserve `server/.env` on the Pi.
-
-See `server/SETUP.md` for OAuth configuration and server setup details.
+Deploy scripts preserve `server/.env` and `server/db/*.db` on the Pi.
+See `server/SETUP.md` for full OAuth + nginx setup.
 
 ---
 
@@ -158,38 +193,20 @@ See `server/SETUP.md` for OAuth configuration and server setup details.
 Browser
   └── Cloudflare Tunnel (HTTPS)
         └── nginx :80
-              ├── /             → /srv/storage/AnniWebsite/ (static files)
-              ├── /api/stats    → 127.0.0.1:5000 (Python stats API)
-              └── /api/*        → 127.0.0.1:4000 (Express backend)
-                                      ├── OAuth providers
+              ├── /             → /srv/storage/AnniWebsite/ (static)
+              ├── /api/stats    → 127.0.0.1:5000 (Python stats)
+              └── /api/*        → 127.0.0.1:4000 (Express)
                                       └── organizer.db (SQLite)
 ```
 
-- SSH accessible via **Tailscale only** (no public exposure)
-- Samba accessible via **Tailscale only**
-- Backend listens on `127.0.0.1` loopback only — never directly exposed
-- UFW: deny all inbound except Tailscale interface
-
-### Stats API
-
-The status dashboard reads from a small Python API on the Pi:
-
-- Service: `anni-stats` (systemd)
-- Port: `127.0.0.1:5000`
-- nginx: proxied at `/api/stats`
+- Backend binds loopback only (`127.0.0.1:4000`) — never directly exposed
+- SSH + Samba via Tailscale only; UFW blocks all other inbound
 
 ---
 
-## Projects featured
+## Contributors & friends
 
-- **[AnniProxy](https://github.com/KoiNoYume7/AnniProxy)** — self-hosted proxy browser backend (WIP)
-- **[AnniWebsite](https://github.com/KoiNoYume7/AnniWebsite)** — this site (WIP)
-
----
-
-## Contributors & friends of the project
-
-- **KoiNoYume7** — original author, design/dev, hosting
+- **KoiNoYume7** — author, design/dev, hosting
 - **[SpizzyCoder](https://github.com/SpizzyCoder)** — contributor and good friend, thanks for all the help <3
 
 ---

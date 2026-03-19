@@ -9,254 +9,291 @@ description: AI instructions for working on AnniWebsite safely and effectively
 AnniWebsite is a self-hosted personal website + AI life organizer for KoiNoYume7.
 
 - Frontend: Vite + vanilla JS SPA (hash-router, no framework)
-- Backend: Node.js + Express with OAuth + SQLite database
+- Backend: Node.js + Express with OAuth + SQLite
 - Stats API: Python `http.server` JSON API for the status dashboard
-- Reverse proxy: nginx
-- Hosting: Raspberry Pi 4 (storage under `/srv/storage`, logs/backups under `/srv/backup`)
+- Reverse proxy: nginx on Raspberry Pi 4
+- Hosting: `/srv/storage` (web files), `/srv/backup` (backups)
 
 Primary domain: `https://yumehana.dev`
 
-## Current development state (March 2026)
+## Development state (March 2026)
 
-Phase 0 (foundation) and Phase 1 (organizer shell) are complete. The organizer is a real feature, not a placeholder — it has a live SQLite database, open-registration OAuth, persistent sessions, and a full dashboard UI. Phase 2 (feature modules: todos, calendar, reminders, finance) is next.
+Phase 0 (foundation) and Phase 1 (organizer shell) are complete. Phase 2 (feature modules) is next.
+The organizer is the main product — it's a real feature with a live SQLite DB and full auth.
 
-See `docs/TODO.md` for the full roadmap.
+See `docs/TODO.md` for the full roadmap and phase tracker.
+
+---
 
 ## Repo layout (authoritative)
 
-- `client/`
-  - Vite app
-  - `src/main.js` — SPA entry, router, starfield, cursor, dev banner, easter eggs
-  - `src/pages/*` — route modules (home, about, projects, blog, contact, login, status, organizer)
-  - `src/components/*` — shared UI (nav.js, footer.js)
-  - `src/posts/*` — markdown posts (loaded by the blog page)
-  - `src/styles/global.css` — design tokens, reset, dev banner, starfield, animations
-  - `src/styles/components.css` — buttons, cards, nav, footer, organizer layout
-  - Output build: `client/dist/`
-- `server/`
-  - `server.js` — Express server: OAuth, sessions, `/api/user/me`, `/api/meta`, `/api/health`, dev login
-  - `db/db.js` — SQLite init (WAL mode, FK constraints), exports `db` singleton
-  - `db/schema.sql` — full schema: users, todos, events, reminders, finance_entries, ai_usage
-  - `db/organizer.db` — live database (not committed)
-  - `db/sessions.db` — session store (not committed)
-  - `anni-website.service` — systemd unit (paths are Pi-specific)
-  - `.env.example` — OAuth, session, and feature flag config template
-  - `SETUP.md` — OAuth app setup notes
-- `stats/`
-  - `stats.py` — lightweight JSON stats API on port 5000
-  - `anni-stats.service` — systemd unit
-- `nginx/`
-  - `yumehana.dev.nginx` — nginx site config
-- `deploy.ps1` — Windows deploy script
-- `deploy.sh` — Unix deploy script
-- `docs/TODO.md` — organizer development roadmap + phase tracker
+```
+client/src/
+  main.js                 ← Thin entry — imports and wires everything, ~30 lines
+  lib/
+    router.js             ← Hash router: routes map, navigate(), hashchange
+    toast.js              ← showToast()
+    theme.js              ← initTheme(), toggleTheme()
+    meta.js               ← syncAppMeta(), injectDevBanner(), boots __APP_META_PROMISE
+  effects/
+    starfield.js          ← Parallax starfield canvas
+    cursor.js             ← Custom cursor + trailing ring
+    easter-eggs.js        ← Konami code, logo ×7, /anni route registration
+  components/
+    nav.js                ← Site navigation
+    footer.js             ← Site footer
+  pages/                  ← Site pages (one file = one route)
+    home.js               ← Organizer-first hero; also exports prefetchGitHub()
+    about.js
+    projects.js
+    blog.js
+    contact.js
+    login.js
+    status.js             ← Admin-only Pi dashboard
+    organizer.js          ← Stub re-export → ../organizer/index.js (file was relocated)
+  organizer/              ← Self-contained — working on organizer = working in here
+    index.js              ← Entry: auth check, shell render, tab switching
+    lib/
+      api.js              ← All organizer fetch calls (fetchUser, makeCRUD factory)
+      tier.js             ← TAB_CONFIG, TIER_LIMITS, TIER_LABELS, helpers
+    components/
+      sidebar.js          ← buildSidebar(user) returns sidebar HTML string
+    tabs/                 ← One file per tab — drop Phase 2+ files here
+      todos.js            ← render(user) → HTML string
+      calendar.js
+      reminders.js
+      finance.js
+      ai-chat.js
+  posts/                  ← Markdown blog posts
+  styles/
+    global.css            ← Design tokens, reset, starfield, cursor, dev banner, toast
+    components.css        ← Shared: buttons, cards, nav, footer, forms, badges, spinner
+    organizer.css         ← All .organizer-* classes
+    pages/
+      home.css            ← Home-specific responsive rules + feature card styles
+      about.css           ← About-specific responsive rules
+      contact.css         ← Contact-specific responsive rules
+
+server/
+  server.js              ← Express setup, middleware, auth routes (/api/auth/*)
+  db/
+    db.js                ← SQLite singleton (WAL + FK pragmas)
+    schema.sql           ← Full schema
+  routes/                ← Route modules — Phase 2+ goes here
+    user.js              ← /api/user/me
+  .env.example
+  anni-website.service
+
+stats/
+  stats.py               ← Python stats API on :5000
+  anni-stats.service
+
+nginx/
+  yumehana.dev.nginx
+
+docs/
+  AI_INSTRUCTIONS.md     ← This file
+  TODO.md                ← Organizer roadmap + phase tracker
+  IDEAS.md               ← Unstructured future ideas (Spotify, etc.)
+```
+
+---
+
+## Adding a new organizer tab (the intended workflow for Phase 2)
+
+1. Create `client/src/organizer/tabs/your-tab.js` — export `render(user)` returning an HTML string
+2. Import and register it in `client/src/organizer/index.js` → `TAB_RENDERERS`
+3. Add entry to `TAB_CONFIG` in `client/src/organizer/lib/tier.js`
+4. Create `server/routes/organizer/your-tab.js` with CRUD routes, import in `server.js`
+
+**No other files need to change.** This is the whole point of the isolation.
+
+---
 
 ## Runtime architecture (production)
 
-Request flow:
+```
+Browser → Cloudflare Tunnel (HTTPS) → nginx :80
+  ├── /             → /srv/storage/AnniWebsite/ (static files)
+  ├── /api/stats    → 127.0.0.1:5000 (Python — explicit block, higher priority)
+  └── /api/*        → 127.0.0.1:4000 (Node/Express)
+```
 
-1. Browser → Cloudflare Tunnel (HTTPS)
-2. Tunnel → nginx `:80`
-3. nginx serves static frontend from `/srv/storage/AnniWebsite`
-4. nginx proxies:
-   - `/api/stats` → `127.0.0.1:5000` (Python stats — explicit block, higher priority)
-   - `/api/*` → `127.0.0.1:4000` (Node/Express — catch-all)
-
-Important invariants:
-
+Invariants:
 - Backend binds loopback only: `127.0.0.1:4000`
 - Stats binds loopback only: `127.0.0.1:5000`
-- Public exposure is only through nginx/Cloudflare Tunnel
-- `/api/stripe/webhook` will need a special nginx block with `proxy_request_buffering off` (Phase 4)
+- `/api/stripe/webhook` (Phase 4) needs `proxy_request_buffering off` in nginx
+
+---
 
 ## Key endpoints
 
-Backend (Node/Express):
-
 | Endpoint | Auth | Description |
 |---|---|---|
-| `GET /api/auth/me` | Public | Returns session user or 401 |
-| `GET /api/user/me` | Required | Returns full DB user record |
-| `GET /api/auth/:provider` | Public | Start OAuth flow (github/discord/google) |
-| `GET /api/auth/callback/:provider` | Public | OAuth callback — upsert user, set session, redirect to `/#/organizer` |
+| `GET /api/auth/me` | Public | Session user or 401 |
+| `GET /api/user/me` | Required | Full DB user record (organizer uses this) |
+| `GET /api/auth/:provider` | Public | Start OAuth (github/discord/google) |
+| `GET /api/auth/callback/:provider` | Public | OAuth callback → upsert user → redirect `/#/organizer` |
 | `GET /api/auth/logout` | Public | Destroy session |
 | `GET /api/health` | Public | Health check + uptime |
-| `GET /api/meta` | Public | Returns `{ devMode, frontendUrl }` |
-| `POST /api/dev/login` | Public (DEV_MODE only) | Create dev session — body: `{ name, email, role }` |
+| `GET /api/meta` | Public | `{ devMode, frontendUrl }` |
+| `POST /api/dev/login` | Public (DEV_MODE only) | Create dev session; body: `{ name, email, role }` |
 
-Stats (Python):
-
-- `GET /api/stats` → aggregated stats JSON
-- `GET /api/stats/health` → simple health check
-
-Frontend routes are hash-based (`#/...`). Successful OAuth login redirects to `/#/organizer`.
+---
 
 ## Database
 
-SQLite via `better-sqlite3`. File: `server/db/organizer.db`. WAL mode enabled, foreign keys enforced.
-
-Tables:
+SQLite via `better-sqlite3`. File: `server/db/organizer.db` (not committed). WAL mode, FK constraints enabled.
 
 | Table | Purpose |
 |---|---|
 | `users` | Created on first OAuth login. Roles: `free`, `subscriber`, `admin`. Stripe + token fields for Phase 3/4. |
-| `todos` | User todos with priority, due date, list grouping, sort order. |
-| `events` | Calendar events with start/end datetime, all-day flag, recurrence JSON, color. |
-| `reminders` | Time-based reminders with optional repeat cron and `delivered` flag. |
-| `finance_entries` | Income/expense ledger. Amounts stored as cents (integer) to avoid float drift. |
-| `ai_usage` | Per-request Claude token logging (input + output, model, context). |
+| `todos` | Priority lists with due dates and list grouping. Phase 2.1. |
+| `events` | Calendar events. Phase 2.2. |
+| `reminders` | Time-based reminders with cron repeat. Phase 2.3. |
+| `finance_entries` | Income/expense ledger. Amounts as cents (integer). Phase 2.4. |
+| `ai_usage` | Per-request Claude token logging. Phase 3. |
 
-All timestamps are Unix epoch integers. Money is always cents.
+**Money is always stored as cents (integer). Never floats.**
+
+---
 
 ## Auth model
 
-- Any OAuth account (GitHub/Discord/Google) can sign in and gets `role: 'free'` by default.
-- Env var whitelists (`GITHUB_ALLOWED_IDS`, `DISCORD_ALLOWED_IDS`, `GOOGLE_ALLOWED_EMAILS`) promote specific accounts to `role: 'admin'` on login. These are no longer gatekeepers — just admin promoters.
+- Any OAuth account gets `role: 'free'` on first login — open registration.
+- Env var whitelists (`GITHUB_ALLOWED_IDS`, `DISCORD_ALLOWED_IDS`, `GOOGLE_ALLOWED_EMAILS`) promote to `role: 'admin'`.
 - Middleware: `requireAuth` (session check), `requireSubscriber` (role must be `subscriber` or `admin`).
+
+---
 
 ## Local development
 
 ### Frontend
 
-From `client/`:
-
 ```bash
-npm install
-npm run dev   # http://localhost:5173
+cd client && npm install && npm run dev
+# Vite: http://localhost:3000, proxies /api/* → :4000
 ```
-
-Vite proxies `/api/*` → `http://localhost:4000` automatically.
 
 ### Backend
 
-From `server/`:
-
 ```bash
-npm install
-cp .env.example .env
-# Fill in SESSION_SECRET at minimum
-# Set DEV_MODE=true to enable dev login
-node server.js   # or: npm run dev
+cd server && npm install
+cp .env.example .env   # fill SESSION_SECRET, set DEV_MODE=true
+node server.js         # or npm run dev
 ```
 
-Notes:
-
-- Backend uses `FRONTEND_URL` for CORS. Set it to `http://localhost:5173` in `.env` for local dev.
-- `trust proxy` is set — nginx sits in front in production.
+Set `FRONTEND_URL_DEV=http://localhost:3000` for CORS in dev.
 
 ### Dev login (OAuth bypass)
 
-OAuth callback URLs are tied to the production domain (`yumehana.dev`). OAuth **will not work on localhost** without configuring separate dev OAuth apps.
+OAuth redirects go to the production domain — they won't work on localhost.
 
-**Use dev login instead:**
-
-1. Set `DEV_MODE=true` in `server/.env`
-2. Start the backend and frontend
-3. Go to `#/login` — a "Dev Login" button appears below the OAuth buttons
-4. Click it → calls `POST /api/dev/login` → creates an admin session → redirects to `#/organizer`
-
-This is the intended local development flow for anything behind auth.
+**Workflow:** `DEV_MODE=true` → go to `#/login` → click **Dev Login** → admin session created via `POST /api/dev/login` → lands on `#/organizer`.
 
 ### Stats API
 
-Runs via systemd on the Pi. Locally:
-
 ```bash
-python stats.py
+python stats/stats.py
 ```
 
-Reads `/proc/*` and systemd — on non-Linux hosts expect partial/empty values.
+Reads `/proc/*` and systemd — partial/empty values on non-Linux.
 
-### Stats payload contract
+---
 
-`stats/stats.py` serves two endpoints:
+## Stats payload contract
 
-- `GET /api/stats` → JSON with: `uptime`, `cpu_temp`, `cpu_load`, `cpu_usage` (per core), `memory`, `storage`, `network`, `services`, `fail2ban`, `logs`
-- `GET /api/stats/health` → lightweight availability check
+`GET /api/stats` → `uptime`, `cpu_temp`, `cpu_load`, `cpu_usage`, `memory`, `storage`, `network`, `services`, `fail2ban`, `logs`
 
-Update both `stats/stats.py` and `client/src/pages/status.js` together if adding/removing fields.
+Update both `stats/stats.py` and `client/src/pages/status.js` together if fields change.
+
+---
 
 ## Deployment
 
-### Windows deploy (`deploy.ps1`)
+### Windows (`deploy.ps1`)
 
-Uses `ssh` + `scp`. Deploys:
-- Frontend: `client/dist/*` → `${PI_WEB}`
-- Backend: `server/*` → `${PI_SERVER}` (excludes `node_modules`, `.env`, `db/*.db`)
-
-**SSH agent (Windows):**
-
+Uses `ssh`/`scp`. SSH agent required for smooth deploys:
 ```powershell
-Set-Service ssh-agent -StartupType Automatic
-Start-Service ssh-agent
+Set-Service ssh-agent -StartupType Automatic && Start-Service ssh-agent
 ssh-add $env:USERPROFILE\.ssh\id_ed25519
 ```
 
-### Unix deploy (`deploy.sh`)
+### Unix (`deploy.sh`)
 
-Uses `rsync`. Also restarts `anni-website` systemd service.
+Uses `rsync`, restarts `anni-website` systemd service.
 
-### systemd units
-
-- `server/anni-website.service` — runs Node backend (paths must match deployed directory)
-- `stats/anni-stats.service` — runs Python stats
-
-Diagnose production issues with:
+### Diagnose production
 
 ```bash
 journalctl -u anni-website -n 50 --no-pager
-journalctl -u anni-stats -n 50 --no-pager
+journalctl -u anni-stats   -n 50 --no-pager
 ```
+
+---
 
 ## Nginx
 
 `nginx/yumehana.dev.nginx`:
 
-- Serves static root from `/srv/storage/AnniWebsite`
-- Explicit `/api/stats` block → Python on `:5000`
-- Catch-all `/api/` block → Node on `:4000` (covers all organizer + auth endpoints)
+- Static root: `/srv/storage/AnniWebsite`
+- `/api/stats` (explicit, higher priority) → Python :5000
+- `/api/` (catch-all) → Node :4000
 
 Rules:
-- Always run `nginx -t` before reload.
-- Keep `/api/stats` before `/api/` so the more specific location takes priority.
-- Phase 4 will need a special `/api/stripe/webhook` block with `proxy_request_buffering off`.
+- Always `nginx -t` before reload
+- Phase 4: add explicit `/api/stripe/webhook` block with `proxy_request_buffering off`
 
-## Secrets and safety rules
+---
 
-- Never commit `server/.env` — it contains OAuth secrets and session key.
-- Never commit `server/db/*.db` files — they contain user data. `.gitignore` covers them.
-- When editing auth logic: preserve cookie/session security (`httpOnly`, `secure`, `sameSite`).
-- When editing deploy scripts: keep `.env` and `.db` files preserved on the Pi.
+## Safety rules
 
-## Common pitfalls / gotchas
+- Never commit `server/.env` (OAuth secrets + session key)
+- Never commit `server/db/*.db` (user data — covered by `.gitignore`)
+- Preserve `httpOnly`, `secure`, `sameSite` on session cookie
+- Deploy scripts must preserve `.env` and `.db` files on Pi
 
-- PowerShell is case-insensitive: do not name functions `SSH`/`SCP` — they collide with the real binaries.
-- Windows PowerShell can break on some non-ASCII characters depending on encoding.
-- `systemctl is-active` output includes newlines — always `.Trim()` before comparing.
-- `scp` globs are more reliable with forward slashes: `client/dist/*`.
-- Money in `finance_entries` is **always cents** (integer). Never store floats.
-- `tokens_reset_at` is a Unix timestamp — compare with `Date.now() / 1000`, not `new Date()`.
+---
 
-## When you (the AI) should ask before changing things
+## Common pitfalls
+
+- PowerShell: don't name functions `SSH`/`SCP` — they shadow the real binaries
+- `systemctl is-active` output has a trailing newline — always `.Trim()` before comparing
+- Money in `finance_entries` is **cents** — never store or display as floats
+- `tokens_reset_at` is Unix epoch (seconds) — compare with `Math.floor(Date.now() / 1000)`
+
+---
+
+## Ask before changing
 
 - OAuth provider settings / callback URLs
 - Any path under `/srv/storage` or `/srv/backup`
-- systemd unit changes that affect `User`, `WorkingDirectory`, or filesystem permissions
-- Stripe webhook handling (raw body requirement is critical — don't add body parsers before it)
+- systemd unit `User`, `WorkingDirectory`, or filesystem permissions
+- Stripe webhook handling (raw body requirement is critical)
+
+---
 
 ## Quick "where to look" map
 
 | Thing | File |
 |---|---|
-| SPA routing / initialization | `client/src/main.js` |
-| Organizer dashboard | `client/src/pages/organizer.js` |
-| Status dashboard frontend | `client/src/pages/status.js` |
+| App boot + wiring | `client/src/main.js` |
+| Routing | `client/src/lib/router.js` |
+| Organizer entry | `client/src/organizer/index.js` |
+| Organizer tab content | `client/src/organizer/tabs/*.js` |
+| Organizer API calls | `client/src/organizer/lib/api.js` |
+| Tier / token config | `client/src/organizer/lib/tier.js` |
+| Sidebar HTML | `client/src/organizer/components/sidebar.js` |
+| Visual effects | `client/src/effects/` |
+| Home page | `client/src/pages/home.js` |
 | Login + dev login UI | `client/src/pages/login.js` |
-| Design tokens + animations | `client/src/styles/global.css` |
-| Component styles + organizer layout | `client/src/styles/components.css` |
-| OAuth + sessions + API routes | `server/server.js` |
-| Database init + singleton | `server/db/db.js` |
-| Full DB schema | `server/db/schema.sql` |
-| Stats API implementation | `stats/stats.py` |
-| Reverse proxy rules | `nginx/yumehana.dev.nginx` |
-| Deployment automation | `deploy.ps1`, `deploy.sh` |
+| Design tokens | `client/src/styles/global.css` |
+| Organizer styles | `client/src/styles/organizer.css` |
+| Shared component styles | `client/src/styles/components.css` |
+| OAuth + sessions | `server/server.js` |
+| User API route | `server/routes/user.js` |
+| DB init | `server/db/db.js` |
+| Full schema | `server/db/schema.sql` |
+| Stats API | `stats/stats.py` |
+| Nginx config | `nginx/yumehana.dev.nginx` |
+| Deploy | `deploy.ps1`, `deploy.sh` |

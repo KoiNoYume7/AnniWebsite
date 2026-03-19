@@ -3,29 +3,40 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="KoiNoYume7 — self-hosted projects, open-source tools, and late-night builds." />
+  <meta name="description" content="KoiNoYume7 — self-hosted life organizer, projects, and late-night builds." />
   <meta property="og:title" content="KoiNoYume7" />
-  <meta property="og:description" content="Building tools that just work. Self-hosted on Raspberry Pi." />
+  <meta property="og:description" content="One place for todos, time, finance & Claude. Self-hosted on Raspberry Pi." />
   <meta property="og:url" content="https://yumehana.dev" />
   <title>KoiNoYume7</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- Core styles -->
   <link rel="stylesheet" href="/src/styles/global.css" />
   <link rel="stylesheet" href="/src/styles/components.css" />
+
+  <!-- Feature styles -->
+  <link rel="stylesheet" href="/src/styles/organizer.css" />
+
+  <!-- Page-specific styles -->
+  <link rel="stylesheet" href="/src/styles/pages/home.css" />
+  <link rel="stylesheet" href="/src/styles/pages/about.css" />
+  <link rel="stylesheet" href="/src/styles/pages/contact.css" />
 </head>
 <body>
   <div id="cursor-dot"></div>
   <div id="cursor-ring"></div>
   <canvas id="star-canvas"></canvas>
+
   <div id="app">
     <div id="nav-root"></div>
     <main id="page-root"></main>
     <div id="footer-root"></div>
   </div>
 
-  <!-- Easter egg overlay -->
+  <!-- Easter egg overlay (Konami code) -->
   <div id="konami-overlay" class="hidden">
     <div class="konami-content">
       <div class="konami-ascii">

@@ -1,0 +1,210 @@
+/* ── Organizer layout & components ── */
+
+.organizer-section { padding: 48px 0 80px; }
+
+.organizer-shell {
+  display: grid;
+  grid-template-columns: 272px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+.organizer-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 90px;
+}
+
+/* ── Profile card ── */
+.organizer-profile { display: flex; flex-direction: column; gap: 10px; }
+
+.organizer-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 2px solid var(--border-h);
+  object-fit: cover;
+}
+
+.organizer-eyebrow {
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 2px;
+}
+
+.organizer-profile h2 {
+  font-family: var(--font-head); font-size: 1rem;
+  font-weight: 800; letter-spacing: -0.02em;
+  margin-bottom: 1px;
+}
+
+.organizer-subtext { color: var(--muted); font-size: 0.82rem; }
+
+/* ── Tier badge ── */
+.organizer-tier {
+  display: inline-flex; align-items: center;
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 10px; border-radius: 5px;
+  background: var(--accent-dim); color: var(--accent);
+  border: 1px solid rgba(99,210,190,0.2); width: fit-content;
+}
+.organizer-tier[data-tier="admin"] {
+  background: rgba(167,139,250,0.1); color: var(--accent3);
+  border-color: rgba(167,139,250,0.2);
+}
+.organizer-tier[data-tier="pro"] {
+  background: rgba(79,168,216,0.1); color: var(--accent2);
+  border-color: rgba(79,168,216,0.2);
+}
+
+/* ── Token usage card ── */
+.organizer-usage { display: flex; flex-direction: column; gap: 12px; }
+
+.organizer-usage-head {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 8px;
+}
+.organizer-usage-head strong {
+  font-size: 0.83rem; font-family: var(--font-mono);
+}
+
+.organizer-reset { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
+
+.organizer-token-bar {
+  height: 5px; border-radius: 3px;
+  background: var(--border); overflow: hidden;
+}
+.organizer-token-bar-fill {
+  height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  transition: width 0.8s cubic-bezier(.4,0,.2,1);
+}
+
+.organizer-muted { font-size: 0.77rem; color: var(--muted); line-height: 1.5; }
+
+/* ── Sidebar nav ── */
+.organizer-sidebar-nav { display: flex; flex-direction: column; gap: 4px; }
+
+.organizer-nav-btn {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 10px 14px;
+  background: none; border: 1px solid transparent;
+  border-radius: 10px; color: var(--muted);
+  font-family: var(--font-body); font-size: 0.87rem; font-weight: 500;
+  cursor: pointer; transition: all 0.2s; text-align: left;
+}
+.organizer-nav-btn:hover {
+  background: var(--surface); color: var(--text); border-color: var(--border);
+}
+.organizer-nav-btn.active {
+  background: var(--surface-h); color: var(--accent); border-color: var(--border-h);
+}
+
+/* ── Admin card ── */
+.organizer-admin-card { display: flex; flex-direction: column; gap: 10px; }
+.organizer-admin-card p { font-size: 0.82rem; color: var(--muted); }
+
+/* ── Main content area ── */
+.organizer-main {
+  display: flex; flex-direction: column;
+  gap: 20px; min-width: 0;
+}
+
+/* ── Hero card ── */
+.organizer-hero {
+  display: flex; justify-content: space-between;
+  align-items: flex-start; gap: 20px;
+}
+.organizer-hero h1 {
+  font-family: var(--font-head);
+  font-size: clamp(1.1rem, 2vw, 1.45rem);
+  font-weight: 800; letter-spacing: -0.025em;
+  margin: 5px 0 8px;
+}
+.organizer-meta {
+  display: flex; flex-direction: column;
+  align-items: flex-end; gap: 10px;
+  white-space: nowrap; font-size: 0.8rem; color: var(--muted);
+  flex-shrink: 0;
+}
+
+/* ── Tab bar ── */
+.organizer-tab-bar {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  padding: 14px 18px;
+}
+.organizer-tab-btn {
+  display: flex; align-items: center; gap: 7px;
+  padding: 8px 18px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 9px; color: var(--muted);
+  font-family: var(--font-body); font-size: 0.84rem; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+}
+.organizer-tab-btn:hover {
+  background: var(--surface-h); color: var(--text); border-color: var(--border-h);
+}
+.organizer-tab-btn.active {
+  background: var(--accent-dim); color: var(--accent);
+  border-color: rgba(99,210,190,0.3);
+}
+.organizer-tab-btn .icon { font-size: 1rem; }
+
+/* ── Content area ── */
+.organizer-content { min-height: 320px; }
+
+/* ── Placeholder content ── */
+.organizer-placeholder { display: flex; flex-direction: column; gap: 14px; }
+.organizer-placeholder h2 {
+  font-family: var(--font-head); font-size: 1.2rem;
+  font-weight: 800; letter-spacing: -0.02em;
+}
+.organizer-placeholder p { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
+.organizer-placeholder ul { padding-left: 20px; display: flex; flex-direction: column; gap: 6px; }
+.organizer-placeholder li { font-size: 0.87rem; color: var(--text-soft); line-height: 1.6; }
+
+.organizer-placeholder-cta {
+  margin-top: 8px; padding-top: 18px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.organizer-placeholder-cta p {
+  flex: 1; font-size: 0.83rem; color: var(--muted); margin: 0;
+}
+
+/* ── Loading state ── */
+.organizer-loading {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 18px;
+  padding: 64px 40px; text-align: center;
+}
+.organizer-loading p { color: var(--muted); font-size: 0.88rem; }
+
+/* ── Auth / error state ── */
+.organizer-auth-card {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 20px; flex-wrap: wrap;
+}
+.organizer-auth-card h2 {
+  font-family: var(--font-head); font-size: 1.15rem;
+  font-weight: 800; margin-bottom: 5px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 920px) {
+  .organizer-shell { grid-template-columns: 1fr; }
+  .organizer-sidebar { position: static; }
+  .organizer-sidebar-nav { flex-direction: row; flex-wrap: wrap; }
+  .organizer-nav-btn { flex: 1 1 auto; justify-content: center; min-width: 100px; }
+}
+
+@media (max-width: 600px) {
+  .organizer-section { padding: 28px 0 56px; }
+  .organizer-hero { flex-direction: column; gap: 14px; }
+  .organizer-meta { align-items: flex-start; flex-direction: row; flex-wrap: wrap; }
+  .organizer-tab-bar { gap: 6px; padding: 10px 14px; }
+  .organizer-tab-btn { padding: 7px 12px; font-size: 0.79rem; }
+  .organizer-placeholder-cta { flex-direction: column; align-items: flex-start; }
+}

@@ -8,6 +8,7 @@ import path from 'path'
 import fs from 'fs'
 
 import db from './db/db.js'
+import { registerUserRoutes } from './routes/user.js'
 
 const app  = express()
 const PORT = process.env.PORT || 4000
@@ -242,12 +243,8 @@ app.get('/api/auth/me', (req, res) => {
   res.json({ ok: true, user })
 })
 
-// GET /api/user/me — returns full DB user record
-app.get('/api/user/me', requireAuth, (req, res) => {
-  const user = getUserById.get(req.session.user.id)
-  if (!user) return res.status(404).json({ ok: false, error: 'User not found' })
-  res.json({ ok: true, user })
-})
+// ── User routes (extracted to server/routes/user.js) ──
+registerUserRoutes(app, { requireAuth })
 
 // GET /api/auth/:provider — kick off OAuth flow
 app.get('/api/auth/:provider', (req, res) => {

@@ -1,32 +1,115 @@
+// ── Home page ──
+// Organizer-first: leads with the product, personal bio second.
+
+// ── GitHub prefetch (called at boot so data is ready when user navigates here) ──
+export async function prefetchGitHub() {
+  try {
+    if (sessionStorage.getItem('github_repos')) return
+    const res = await fetch('https://api.github.com/users/KoiNoYume7/repos?per_page=20&sort=updated')
+    if (!res.ok) return
+    sessionStorage.setItem('github_repos', JSON.stringify(await res.json()))
+  } catch (_) { /* silent — page handles its own fallback */ }
+}
+
 export async function renderHome(root) {
   root.innerHTML = `
-    <!-- Hero -->
-    <section class="home-hero" style="padding:130px 0 90px;position:relative;overflow:hidden">
+    <!-- ── Hero: Organizer as the product ── -->
+    <section class="home-hero" style="padding:130px 0 80px;position:relative;overflow:hidden">
       <div class="wrap">
         <div class="home-hero-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center">
+
           <div class="home-hero-copy">
             <p class="section-eyebrow reveal" style="animation-delay:0s">yumehana.dev</p>
-            <h1 class="reveal" style="font-family:var(--font-head);font-size:clamp(2.6rem,5.5vw,4rem);font-weight:800;letter-spacing:-0.035em;line-height:1.05;margin-bottom:22px;animation-delay:0.08s">
-              Building tools<br class="home-hero-br">at <span style="color:var(--accent)">2AM</span>,<br class="home-hero-br">fuelled by <span style="color:var(--accent2)">Monster.</span>
+            <h1 class="reveal" style="font-family:var(--font-head);font-size:clamp(2.4rem,5vw,3.6rem);font-weight:800;letter-spacing:-0.035em;line-height:1.05;margin-bottom:22px;animation-delay:0.08s">
+              One place for todos,<br>time, finance<br>& <span style="color:var(--accent)">Claude.</span>
             </h1>
-            <p class="reveal home-hero-desc" style="color:var(--muted);font-size:1.05rem;line-height:1.75;max-width:430px;margin-bottom:36px;animation-delay:0.16s">
-              Self-hosting everything, breaking things on purpose, and building open-source tools that actually work.
-              Cybersecurity trainee by day, vibe coder by night.
+            <p class="reveal home-hero-desc" style="color:var(--muted);font-size:1.02rem;line-height:1.75;max-width:430px;margin-bottom:36px;animation-delay:0.16s">
+              A self-hosted personal life OS — built in public, running on a Raspberry Pi 4.
+              Open to anyone. No SaaS fees, no black boxes.
             </p>
             <div class="reveal home-hero-actions" style="display:flex;gap:14px;flex-wrap:wrap;animation-delay:0.24s">
-              <button class="btn btn-primary" onclick="navigate('projects')">View Projects →</button>
-              <button class="btn btn-ghost" onclick="navigate('about')">About me</button>
+              <button class="btn btn-primary" onclick="navigate('organizer')">Open Organizer →</button>
+              <button class="btn btn-ghost"   onclick="navigate('projects')">See projects</button>
             </div>
             <div class="reveal home-hero-links" style="margin-top:32px;display:flex;gap:24px;animation-delay:0.32s">
-              <a href="https://github.com/KoiNoYume7" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.82rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
+              <a href="https://github.com/KoiNoYume7" target="_blank" rel="noopener"
+                style="color:var(--muted);font-size:0.82rem;font-weight:500;text-decoration:none;transition:color .2s"
+                onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
                 GitHub ↗
               </a>
               <span class="home-hero-sep" style="color:var(--border)">|</span>
-              <a href="https://discord.gg/anni" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.82rem;font-weight:500;text-decoration:none;transition:color .2s" onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted)'">
+              <a href="https://discord.gg/anni" target="_blank" rel="noopener"
+                style="color:var(--muted);font-size:0.82rem;font-weight:500;text-decoration:none;transition:color .2s"
+                onmouseover="this.style.color='var(--accent2)'" onmouseout="this.style.color='var(--muted)'">
                 Discord Server ↗
               </a>
             </div>
           </div>
+
+          <!-- Feature grid -->
+          <div class="reveal" style="animation-delay:0.2s">
+            <div class="home-feature-grid">
+              ${[
+                { icon: '🗒️', label: 'Todos',     desc: 'Priority lists with drag-to-reorder and Claude-powered daily planning.' },
+                { icon: '📅', label: 'Calendar',  desc: 'FullCalendar with drag-to-reschedule and AI week summaries.' },
+                { icon: '⏰', label: 'Reminders', desc: 'Node-cron delivery, flexible repeat rules, and web push in Phase 5.' },
+                { icon: '💰', label: 'Finance',   desc: 'Income & expense ledger with Chart.js breakdowns and Claude insights.' },
+                { icon: '✨', label: 'AI Chat',   desc: 'Claude Sonnet streams in-panel with context from all your data.' },
+              ].map(f => `
+                <div class="home-feature-card reveal">
+                  <div class="home-feature-icon">${f.icon}</div>
+                  <div class="home-feature-label">${f.label}</div>
+                  <div class="home-feature-desc">${f.desc}</div>
+                </div>`).join('')}
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ── Status teaser ── -->
+    <section class="section-sm">
+      <div class="wrap">
+        <div class="reveal home-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
+          <div class="home-status-meta" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+            <div class="uptime-badge">
+              <div style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>
+              All systems operational
+            </div>
+            <span style="color:var(--muted);font-size:0.85rem">rpi4 · nginx · tailscale · cloudflared — running</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('status')">Pi dashboard →</button>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ── Builder section: who made this ── -->
+    <section class="section">
+      <div class="wrap">
+        <div class="home-about-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
+
+          <div class="reveal">
+            <p class="section-eyebrow">The builder</p>
+            <h2 class="section-title">Building tools<br class="home-about-br">at <span style="color:var(--accent)">2AM</span>,<br class="home-about-br">fuelled by <span style="color:var(--accent2)">Monster.</span></h2>
+            <p style="color:var(--muted);font-size:0.97rem;line-height:1.78;margin-bottom:28px">
+              Cybersecurity trainee from Switzerland. Evenings: self-hosting infrastructure,
+              building privacy tools, and pushing commits at timestamps that would concern a doctor.
+              Runs on a Raspberry Pi 4 and a dangerous amount of energy drinks.
+            </p>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px">
+              ${['Python','JavaScript','C','PowerShell','Linux','Networking','Cybersecurity','RPi4'].map(s =>
+                `<span class="tag">${s}</span>`
+              ).join('')}
+            </div>
+            <button class="btn btn-ghost" onclick="navigate('about')">Read more →</button>
+          </div>
+
+          <!-- Pi terminal -->
           <div class="reveal home-hero-terminal-wrap" style="animation-delay:0.2s">
             <div id="hero-terminal" class="home-hero-terminal" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px;font-family:var(--font-mono);font-size:0.82rem;box-shadow:var(--shadow)">
               <div style="display:flex;gap:8px;margin-bottom:20px">
@@ -38,43 +121,24 @@ export async function renderHome(root) {
               <div id="terminal-lines" style="line-height:2"></div>
             </div>
           </div>
+
         </div>
       </div>
     </section>
 
     <hr class="divider" />
 
-    <!-- Status teaser -->
-    <section class="section-sm">
-      <div class="wrap">
-        <div class="reveal home-status-card" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px">
-          <div class="home-status-meta" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-            <div class="uptime-badge">
-              <div style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite"></div>
-              All systems operational
-            </div>
-            <span style="color:var(--muted);font-size:0.85rem">rpi4 · nginx · tailscale · smbd — running</span>
-          </div>
-          <button class="btn btn-ghost btn-sm" onclick="navigate('login')">View Status Dashboard →</button>
-        </div>
-      </div>
-    </section>
-
-    <hr class="divider" />
-
-    <!-- Featured projects -->
+    <!-- ── Featured projects ── -->
     <section class="section">
       <div class="wrap">
         <p class="section-eyebrow reveal">Work</p>
         <h2 class="section-title reveal">Featured Projects</h2>
         <p class="section-sub reveal" style="margin-bottom:52px">Open-source tools I'm actively building. All self-hosted, all real.</p>
-
         <div class="home-projects-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:22px" id="home-projects-grid">
           <div style="height:220px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);display:flex;align-items:center;justify-content:center;color:var(--muted)">
             Loading projects…
           </div>
         </div>
-
         <div class="reveal" style="margin-top:36px;text-align:center">
           <button class="btn btn-ghost" onclick="navigate('projects')">All Projects →</button>
         </div>
@@ -83,45 +147,7 @@ export async function renderHome(root) {
 
     <hr class="divider" />
 
-    <!-- About teaser -->
-    <section class="section">
-      <div class="wrap">
-        <div class="home-about-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
-          <div class="reveal">
-            <p class="section-eyebrow">About</p>
-            <h2 class="section-title">The person<br class="home-about-br">behind the keyboard</h2>
-            <p style="color:var(--muted);font-size:0.97rem;line-height:1.78;margin-bottom:28px">
-              Cybersecurity trainee from Switzerland. I spend my evenings self-hosting infrastructure,
-              building privacy tools, and pushing commits at timestamps that would concern my doctor.
-              My setup runs on a Raspberry Pi 4 and a dangerous amount of energy drinks.
-            </p>
-            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px">
-              ${['Python','JavaScript','C','PowerShell','Linux','Networking','Cybersecurity','RPi4'].map(s =>
-                `<span class="tag">${s}</span>`
-              ).join('')}
-            </div>
-            <button class="btn btn-ghost" onclick="navigate('about')">Read more →</button>
-          </div>
-          <div class="reveal home-about-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-            ${[
-              { n: 'RPi4',  l: 'Home server' },
-              { n: 'OSS',   l: 'Open source' },
-              { n: '24/7',  l: 'Always up' },
-              { n: '2AM',   l: 'Commit time' },
-            ].map(s => `
-              <div class="card" style="text-align:center;padding:28px 20px">
-                <div style="font-family:var(--font-head);font-size:1.9rem;font-weight:800;color:var(--accent);line-height:1;margin-bottom:6px">${s.n}</div>
-                <div style="font-size:0.78rem;color:var(--muted)">${s.l}</div>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <hr class="divider" />
-
-    <!-- Discord CTA -->
+    <!-- ── Discord CTA ── -->
     <section class="section-sm">
       <div class="wrap">
         <div class="reveal home-discord-cta" style="background:linear-gradient(135deg,rgba(88,101,242,0.12),rgba(99,210,190,0.08));border:1px solid rgba(88,101,242,0.25);border-radius:var(--radius-lg);padding:52px;text-align:center">
@@ -144,15 +170,15 @@ export async function renderHome(root) {
 
   // ── Terminal animation ──
   const lines = [
-    { text: '$ uptime', color: 'var(--accent)', delay: 200 },
-    { text: ' 12 days, 7:34 — load: 0.42', color: 'var(--text)', delay: 700 },
-    { text: '$ systemctl status nginx', color: 'var(--accent)', delay: 1300 },
-    { text: ' ● nginx.service — Active: running', color: 'var(--green)', delay: 1800 },
-    { text: '$ cat /proc/cpuinfo | grep Raspberry', color: 'var(--accent)', delay: 2500 },
-    { text: ' Hardware : BCM2711 — Raspberry Pi 4', color: 'var(--accent2)', delay: 3100 },
-    { text: '$ whoami', color: 'var(--accent)', delay: 3800 },
-    { text: ' koinoyume7 — vibe coder, self-hoster', color: 'var(--accent3)', delay: 4300 },
-    { text: '█', color: 'var(--accent)', delay: 5000, blink: true },
+    { text: '$ uptime',                                          color: 'var(--accent)',  delay: 200 },
+    { text: ' 12 days, 7:34 — load: 0.42',                      color: 'var(--text)',    delay: 700 },
+    { text: '$ systemctl status nginx',                          color: 'var(--accent)',  delay: 1300 },
+    { text: ' ● nginx.service — Active: running',               color: 'var(--green)',   delay: 1800 },
+    { text: '$ cat /proc/cpuinfo | grep Raspberry',             color: 'var(--accent)',  delay: 2500 },
+    { text: ' Hardware : BCM2711 — Raspberry Pi 4',             color: 'var(--accent2)', delay: 3100 },
+    { text: '$ whoami',                                          color: 'var(--accent)',  delay: 3800 },
+    { text: ' koinoyume7 — vibe coder, self-hoster',            color: 'var(--accent3)', delay: 4300 },
+    { text: '█',                                                 color: 'var(--accent)',  delay: 5000, blink: true },
   ]
   const container = document.getElementById('terminal-lines')
   if (container) {
@@ -167,11 +193,10 @@ export async function renderHome(root) {
     })
   }
 
-  // ── Load GitHub projects (wait one frame for DOM to paint) ──
   requestAnimationFrame(() => loadHomeProjects())
-  setTimeout(() => loadHomeProjects(), 0)
 }
 
+// ── GitHub project cards ──
 async function loadHomeProjects() {
   let grid = document.getElementById('home-projects-grid')
   if (!grid) return
@@ -179,13 +204,11 @@ async function loadHomeProjects() {
   const KNOWN = ['AnniProxy', 'AnniWebsite']
   const icons = { AnniProxy: '🔀', AnniWebsite: '🌐' }
   const descs = {
-    AnniProxy: 'A self-hosted proxy browser backend — routes and manages web traffic privately, giving you full control.',
-    AnniWebsite: 'This website. Built with Vite, plain JS, and a lot of Monster Energy. Self-hosted on RPi4.',
+    AnniProxy:   'A self-hosted proxy browser backend — routes and manages web traffic privately, giving you full control.',
+    AnniWebsite: 'This website + organizer. Built with Vite, plain JS, and a lot of Monster Energy. Self-hosted on RPi4.',
   }
 
-  try {
-
-  // Show skeletons while fetching
+  // Skeleton loaders
   grid.innerHTML = KNOWN.map(() => `
     <div class="project-card" style="opacity:0.35;pointer-events:none">
       <div style="width:44px;height:44px;border-radius:12px;background:var(--border);margin-bottom:14px"></div>
@@ -196,7 +219,6 @@ async function loadHomeProjects() {
 
   let data = []
   try {
-    // Use cache if available, otherwise fetch — no polling, no waiting
     const cached = sessionStorage.getItem('github_repos')
     if (cached) {
       data = JSON.parse(cached)
@@ -207,22 +229,16 @@ async function loadHomeProjects() {
         sessionStorage.setItem('github_repos', JSON.stringify(data))
       }
     }
-  } catch (e) {
-    data = []
-  }
+  } catch (_) { data = [] }
 
-  // Guard: user may have navigated away while fetch was in flight
   if (!grid.isConnected) {
     grid = document.getElementById('home-projects-grid')
     if (!grid) return
   }
 
   const filtered = KNOWN.map(name => data.find(r => r.name === name)).filter(Boolean)
-
-  // Always render cards — use static fallback if GitHub unreachable
   const cards = filtered.length ? filtered : KNOWN.map(name => ({
-    name,
-    html_url: `https://github.com/KoiNoYume7/${name}`,
+    name, html_url: `https://github.com/KoiNoYume7/${name}`,
     stargazers_count: '—', forks_count: '—', topics: [], language: null,
   }))
 
@@ -245,12 +261,10 @@ async function loadHomeProjects() {
         </div>
         <span class="pc-link">GitHub ↗</span>
       </div>
-    </a>
-  `).join('')
+    </a>`).join('')
 
   grid.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'))
 
-  // Spotlight effect
   grid.querySelectorAll('.project-card').forEach(card => {
     card.addEventListener('mousemove', e => {
       const r = card.getBoundingClientRect()
@@ -258,34 +272,4 @@ async function loadHomeProjects() {
       card.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100) + '%')
     })
   })
-  } catch (_) {
-    if (!grid || !grid.isConnected) return
-    grid.innerHTML = KNOWN.map(name => ({
-      name,
-      html_url: `https://github.com/KoiNoYume7/${name}`,
-      stargazers_count: '—',
-      forks_count: '—',
-      topics: [],
-      language: null,
-    })).map(repo => `
-    <a class="project-card reveal" href="${repo.html_url}" target="_blank" rel="noopener">
-      <div class="pc-top">
-        <div class="pc-icon">${icons[repo.name] || '📦'}</div>
-        <span class="badge-wip">WIP</span>
-      </div>
-      <div class="pc-title">${repo.name}</div>
-      <div class="pc-desc">${descs[repo.name] || 'No description.'}</div>
-      <div class="pc-tags"></div>
-      <div class="pc-footer">
-        <div class="pc-stats">
-          <span class="pc-stat">⭐ ${repo.stargazers_count}</span>
-          <span class="pc-stat">🍴 ${repo.forks_count}</span>
-        </div>
-        <span class="pc-link">GitHub ↗</span>
-      </div>
-    </a>
-  `).join('')
-
-    grid.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'))
-  }
 }
