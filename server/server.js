@@ -1,14 +1,130 @@
 import 'dotenv/config'
 import express from 'express'
 import session from 'express-session'
+import connectSQLite3 from 'connect-sqlite3'
 import fetch from 'node-fetch'
 import crypto from 'crypto'
+import path from 'path'
+import fs from 'fs'
+
+import db from './db/db.js'
 
 const app  = express()
 const PORT = process.env.PORT || 4000
-const FRONTEND = process.env.FRONTEND_URL || 'https://yumehana.dev'
+const DEV_MODE = process.env.DEV_MODE === 'true' || process.env.NODE_ENV === 'development'
+const FRONTEND = DEV_MODE
+  ? (process.env.FRONTEND_URL_DEV || 'http://localhost:3000')
+  : (process.env.FRONTEND_URL || 'https://yumehana.dev')
+const SQLiteStore = connectSQLite3(session)
+const SESSION_DB_DIR = path.resolve('./db')
+if (!fs.existsSync(SESSION_DB_DIR)) {
+  fs.mkdirSync(SESSION_DB_DIR, { recursive: true })
+}
 
-// ── Whitelist helpers ──
+const getUserById = db.prepare('SELECT * FROM users WHERE id = ?')
+const insertUserStmt = db.prepare(`
+  INSERT INTO users (id, provider, provider_id, name, avatar, email, role, tokens_reset_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+`)
+const updateUserStmt = db.prepare(`
+  UPDATE users SET
+    name = ?,
+    avatar = ?,
+    email = ?,
+    role = ?,
+    updated_at = unixepoch()
+  WHERE id = ?
+`)
+const updateRoleStmt = db.prepare(`
+  UPDATE users SET
+    role = ?,
+    updated_at = unixepoch()
+  WHERE id = ?
+`)
+
+function nextMonthResetEpoch() {
+  const now = new Date()
+  const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0, 0))
+  return Math.floor(next.getTime() / 1000)
+}
+
+function toSessionUser(row) {
+  return {
+    id: row.id,
+    provider: row.provider,
+    name: row.name,
+    avatar: row.avatar,
+    email: row.email,
+    role: row.role,
+    subscription_status: row.subscription_status,
+    subscription_tier: row.subscription_tier,
+    tokens_used_month: row.tokens_used_month,
+    tokens_reset_at: row.tokens_reset_at,
+  }
+}
+
+function ensureSessionUser(req) {
+  if (req.currentUser) return req.currentUser
+  if (!req.session?.user) return null
+  const dbUser = getUserById.get(req.session.user.id)
+  if (!dbUser) return null
+  const sessionUser = toSessionUser(dbUser)
+  req.session.user = sessionUser
+  req.currentUser = sessionUser
+  return sessionUser
+}
+
+function requireAuth(req, res, next) {
+  const user = ensureSessionUser(req)
+  if (!user) return res.status(401).json({ error: 'Not authenticated' })
+  next()
+}
+
+function requireSubscriber(req, res, next) {
+  const user = ensureSessionUser(req)
+  if (!user) return res.status(401).json({ error: 'Not authenticated' })
+  if (user.role !== 'subscriber' && user.role !== 'admin') {
+    return res.status(403).json({ error: 'Subscription required' })
+  }
+  next()
+}
+
+function upsertUser(providerName, providerUserId, normalizedUser, isAdmin) {
+  const userId = `${providerName}:${providerUserId}`
+  const existing = getUserById.get(userId)
+  const email = normalizedUser.email || existing?.email || null
+
+  if (!existing) {
+    insertUserStmt.run(
+      userId,
+      providerName,
+      providerUserId,
+      normalizedUser.name,
+      normalizedUser.avatar || null,
+      email,
+      isAdmin ? 'admin' : 'free',
+      nextMonthResetEpoch()
+    )
+    return getUserById.get(userId)
+  }
+
+  const nextRole = existing.role === 'admin'
+    ? 'admin'
+    : isAdmin
+      ? 'admin'
+      : existing.role
+
+  updateUserStmt.run(
+    normalizedUser.name,
+    normalizedUser.avatar || null,
+    email,
+    nextRole,
+    userId
+  )
+  return getUserById.get(userId)
+}
+
+// ── Admin promotion lists (legacy whitelist) ──
 const allowed = {
   github:  new Set((process.env.GITHUB_ALLOWED_IDS  || '').split(',').map(s => s.trim()).filter(Boolean)),
   discord: new Set((process.env.DISCORD_ALLOWED_IDS || '').split(',').map(s => s.trim()).filter(Boolean)),
@@ -29,8 +145,7 @@ const providers = {
       id:       String(user.id),
       name:     user.login,
       avatar:   user.avatar_url,
-      provider: 'github',
-      role:     'admin',
+      email:    user.email || null,
     }),
   },
   discord: {
@@ -47,8 +162,7 @@ const providers = {
       avatar:   user.avatar
         ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
         : null,
-      provider: 'discord',
-      role:     'admin',
+      email:    null,
     }),
   },
   google: {
@@ -63,8 +177,7 @@ const providers = {
       id:       user.sub,
       name:     user.name,
       avatar:   user.picture || null,
-      provider: 'google',
-      role:     'admin',
+      email:    user.email || null,
     }),
   },
 }
@@ -73,6 +186,7 @@ const providers = {
 app.set('trust proxy', 1)  // trust nginx reverse proxy
 
 app.use(session({
+  store: new SQLiteStore({ db: 'sessions.db', dir: SESSION_DB_DIR }),
   secret:            process.env.SESSION_SECRET || 'change-me-in-production',
   resave:            false,
   saveUninitialized: false,
@@ -123,10 +237,16 @@ function validateState(state) {
 
 // GET /api/auth/me — returns current session user or 401
 app.get('/api/auth/me', (req, res) => {
-  if (req.session?.user) {
-    return res.json({ ok: true, user: req.session.user })
-  }
-  res.status(401).json({ ok: false, error: 'Not authenticated' })
+  const user = ensureSessionUser(req)
+  if (!user) return res.status(401).json({ ok: false, error: 'Not authenticated' })
+  res.json({ ok: true, user })
+})
+
+// GET /api/user/me — returns full DB user record
+app.get('/api/user/me', requireAuth, (req, res) => {
+  const user = getUserById.get(req.session.user.id)
+  if (!user) return res.status(404).json({ ok: false, error: 'User not found' })
+  res.json({ ok: true, user })
 })
 
 // GET /api/auth/:provider — kick off OAuth flow
@@ -208,21 +328,18 @@ app.get('/api/auth/callback/:provider', async (req, res) => {
     })
     const rawUser = await userRes.json()
 
-    // Check whitelist
-    if (!p.isAllowed(rawUser)) {
-      console.warn(`[${providerName}] Rejected user:`, rawUser.id || rawUser.email)
-      return res.redirect(`${FRONTEND}/#/login?error=not_authorized`)
-    }
-
-    // Store session
-    req.session.user = p.normalize(rawUser)
+    const normalizedUser = p.normalize(rawUser)
+    const providerUserId = normalizedUser.id
+    const isAdmin = p.isAllowed(rawUser)
+    const dbUser = upsertUser(providerName, providerUserId, normalizedUser, isAdmin)
+    req.session.user = toSessionUser(dbUser)
     req.session.save((err) => {
       if (err) {
         console.error('Session save error:', err)
         return res.redirect(`${FRONTEND}/#/login?error=session_error`)
       }
       console.log(`[${providerName}] Login success:`, req.session.user.name)
-      res.redirect(`${FRONTEND}/#/status`)
+      res.redirect(`${FRONTEND}/#/organizer`)
     })
 
   } catch (err) {
@@ -243,7 +360,39 @@ app.get('/api/health', (req, res) => {
   res.json({ ok: true, uptime: process.uptime() })
 })
 
+// App metadata (dev flag, frontend URL)
+app.get('/api/meta', (req, res) => {
+  res.json({ ok: true, devMode: DEV_MODE, frontend: FRONTEND })
+})
+
 // ── Start ──
+if (DEV_MODE) {
+  console.log('⚙️  DEV_MODE enabled — /api/dev/login available for local testing')
+  app.post('/api/dev/login', (req, res) => {
+    const { name = 'Dev User', email = 'dev@example.com', role = 'admin' } = req.body || {}
+    const normalizedRole = ['admin', 'subscriber', 'free'].includes(String(role).toLowerCase())
+      ? String(role).toLowerCase()
+      : 'admin'
+
+    const providerUserId = crypto.randomUUID()
+    const normalizedUser = {
+      id: providerUserId,
+      name,
+      avatar: null,
+      email,
+    }
+
+    const dbUser = upsertUser('dev', providerUserId, normalizedUser, normalizedRole === 'admin')
+    if (dbUser.role !== normalizedRole) {
+      updateRoleStmt.run(normalizedRole, dbUser.id)
+    }
+    const freshUser = getUserById.get(dbUser.id)
+    const sessionUser = toSessionUser(freshUser)
+    req.session.user = sessionUser
+    res.json({ ok: true, user: sessionUser, devMode: true })
+  })
+}
+
 app.listen(PORT, '127.0.0.1', () => {
   console.log(`\n🚀 AnniBackend running on http://127.0.0.1:${PORT}`)
   console.log(`   Frontend: ${FRONTEND}`)

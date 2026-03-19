@@ -15,6 +15,7 @@ export async function renderNav(root) {
           <button class="nav-link" data-route="about"    onclick="closeNavMenu(); navigate('about')">About</button>
           <button class="nav-link" data-route="blog"     onclick="closeNavMenu(); navigate('blog')">Devlog</button>
           <button class="nav-link" data-route="contact"  onclick="closeNavMenu(); navigate('contact')">Contact</button>
+          <button class="nav-link" data-route="organizer" onclick="closeNavMenu(); navigate('organizer')">Organizer</button>
         </div>
         <div class="nav-actions">
           <button class="theme-toggle" onclick="toggleTheme()">
@@ -36,10 +37,11 @@ export async function renderNav(root) {
       const { user } = await res.json()
       const btn = document.getElementById('navLoginBtn')
       if (btn) {
-        btn.textContent = user.name
+        btn.textContent = 'Organizer'
+        btn.title = `Signed in as ${user.name}`
         btn.onclick = () => {
           closeNavMenu()
-          navigate('status')
+          navigate('organizer')
         }
       }
     }

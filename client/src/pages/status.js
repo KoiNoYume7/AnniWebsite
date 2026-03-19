@@ -22,6 +22,19 @@ export async function renderStatus(root) {
     return
   }
 
+  if (user.role !== 'admin') {
+    root.innerHTML = `
+      <section style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:60px 20px;text-align:center">
+        <div>
+          <div style="font-size:2.5rem;margin-bottom:16px">🛡️</div>
+          <h2 style="font-family:var(--font-head);font-size:1.6rem;font-weight:800;margin-bottom:10px">Admins only</h2>
+          <p style="color:var(--muted);margin-bottom:28px">Pi telemetry lives in this legacy dashboard. Head to the organizer for everything else.</p>
+          <button class="btn btn-primary" onclick="navigate('organizer')">Open organizer →</button>
+        </div>
+      </section>`
+    return
+  }
+
   const u = user
 
   root.innerHTML = `

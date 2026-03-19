@@ -9,6 +9,11 @@
 			"path": "../AnniWebsite.bak"
 		}
 	],
+	"extensions": {
+		"recommendations": [
+			"hangxingliu.vscode-nginx-conf-hint"
+		]
+	},
 	"settings": {
 		"files.exclude": {
 			"**/.git": false,
@@ -16,7 +21,6 @@
 		},
 		"workbench.startupEditor": "readme",
 		"workbench.editor.restoreViewState": true,
-		"liveServer.settings.multiRootWorkspaceName": "AnniWebsite (main)",
 		"powershell.cwd": "AnniWebsite (main)"
 	}
 }
