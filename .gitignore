@@ -3,3 +3,9 @@
 .vite/
 dist/
 node_modules/
+pnpm-lock.yaml
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal

@@ -71,13 +71,10 @@ Stay tuned.
   },
 ]
 
-export async function renderBlog(root) {
-  // Check if we're viewing a specific post
-  const hash = location.hash
-  const postSlug = hash.includes('blog/') ? hash.split('blog/')[1] : null
-
-  if (postSlug) {
-    renderPost(root, postSlug)
+export async function renderBlog(root, slug = '') {
+  // Router passes the subpath (slug) as the second argument
+  if (slug) {
+    renderPost(root, slug)
     return
   }
 
@@ -93,7 +90,7 @@ export async function renderBlog(root) {
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px" id="blog-grid">
           ${POSTS.map((post, i) => `
             <a class="blog-card reveal" style="animation-delay:${i * 0.08}s"
-               href="#blog/${post.slug}" onclick="navigateBlogPost('${post.slug}');return false">
+               href="#/blog/${post.slug}" onclick="navigate('blog/${post.slug}');return false">
               <div class="blog-date">${formatDate(post.date)}</div>
               <div class="blog-title">${post.title}</div>
               <div class="blog-excerpt">${post.excerpt}</div>
@@ -113,11 +110,6 @@ export async function renderBlog(root) {
       </div>
     </section>
   `
-
-  window.navigateBlogPost = (slug) => {
-    location.hash = `#blog/${slug}`
-    renderPost(root, slug)
-  }
 }
 
 function renderPost(root, slug) {

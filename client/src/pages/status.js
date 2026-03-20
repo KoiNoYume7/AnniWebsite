@@ -22,6 +22,19 @@ export async function renderStatus(root) {
     return
   }
 
+  if (user.role !== 'admin') {
+    root.innerHTML = `
+      <section style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:60px 20px;text-align:center">
+        <div>
+          <div style="font-size:2.5rem;margin-bottom:16px">🛡️</div>
+          <h2 style="font-family:var(--font-head);font-size:1.6rem;font-weight:800;margin-bottom:10px">Admins only</h2>
+          <p style="color:var(--muted);margin-bottom:28px">Pi telemetry lives in this legacy dashboard. Head to the organizer for everything else.</p>
+          <button class="btn btn-primary" onclick="navigate('organizer')">Open organizer →</button>
+        </div>
+      </section>`
+    return
+  }
+
   const u = user
 
   root.innerHTML = `
@@ -196,75 +209,113 @@ export async function renderStatus(root) {
     navigate('')
   }
 
-  function rand(a, b) { return Math.random() * (b - a) + a }
+  function set(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html }
+  function setText(id, v) { const el = document.getElementById(id); if (el) el.textContent = v }
+  function setWidth(id, pct) { const el = document.getElementById(id); if (el) el.style.width = pct + '%' }
 
-  function updateStats() {
-    // Uptime
-    const el = document.getElementById('uptime')
-    if (el) el.innerHTML = `<span style="color:var(--green)">12d 7h</span>`
-
-    // CPU Temp
-    const temp = rand(48, 63).toFixed(1)
-    const tempEl = document.getElementById('cputemp')
-    if (tempEl) tempEl.innerHTML = `<span style="color:${temp > 70 ? 'var(--red)' : temp > 60 ? 'var(--yellow)' : 'var(--accent)'}">${temp}°C</span>`
-
-    // Load
-    const load = rand(0.1, 1.1).toFixed(2)
-    const loadEl = document.getElementById('cpuload')
-    if (loadEl) loadEl.innerHTML = `<span style="color:${load > 2.5 ? 'var(--red)' : 'var(--text)'}">${load}</span>`
-
-    // Memory
-    const memUsed = rand(0.9, 2.3).toFixed(1)
-    const memEl = document.getElementById('memused')
-    if (memEl) memEl.innerHTML = `<span style="color:var(--accent2)">${memUsed} GB</span>`
-
-    // CPU cores
-    for (let i = 0; i < 4; i++) {
-      const pct = Math.round(rand(5, 55))
-      const pctEl = document.getElementById(`cpu${i}pct`)
-      const bar   = document.getElementById(`cpu${i}bar`)
-      if (pctEl) pctEl.textContent = pct + '%'
-      if (bar)   bar.style.width   = pct + '%'
+  async function updateStats() {
+    let d
+    try {
+      const res = await fetch('/api/stats', { credentials: 'include' })
+      if (!res.ok) throw new Error('stats unavailable')
+      d = await res.json()
+    } catch {
+      set('uptime', `<span style="color:var(--muted)">unavailable</span>`)
+      return
     }
 
-    // Memory bars
-    const memPct   = Math.round(parseFloat(memUsed) / 4 * 100)
-    const cachePct = Math.round(rand(8, 22))
-    const swapPct  = Math.round(rand(0, 12))
-    document.getElementById('membar').style.width   = memPct + '%'
-    document.getElementById('cachebar').style.width = cachePct + '%'
-    document.getElementById('swapbar').style.width  = swapPct + '%'
-    document.getElementById('mem_pct').textContent   = memPct + '%'
-    document.getElementById('cache_pct').textContent = cachePct + '%'
-    document.getElementById('swap_pct').textContent  = swapPct + '%'
+    // ── Uptime ──
+    set('uptime', `<span style="color:var(--green)">${d.uptime.human}</span>`)
 
-    // Network
-    document.getElementById('netRx').textContent    = rand(0.4, 6).toFixed(1) + ' MB/s'
-    document.getElementById('netTx').textContent    = rand(0.1, 1.8).toFixed(1) + ' MB/s'
-    document.getElementById('netTotal').textContent = rand(1.1, 8.5).toFixed(1) + ' GB'
+    // ── CPU Temp ──
+    const temp = d.cpu_temp.celsius
+    const tempColor = d.cpu_temp.status === 'hot' ? 'var(--red)' : d.cpu_temp.status === 'warm' ? 'var(--yellow)' : 'var(--accent)'
+    set('cputemp', temp != null
+      ? `<span style="color:${tempColor}">${temp}°C</span>`
+      : `<span style="color:var(--muted)">N/A</span>`)
 
-    // Fail2ban
-    document.getElementById('f2bBanned').textContent = Math.floor(rand(0, 3))
-    document.getElementById('f2bTotal').textContent  = Math.floor(rand(2, 14))
+    // ── Load ──
+    const load = d.cpu_load.load1
+    set('cpuload', `<span style="color:${load > 2.5 ? 'var(--red)' : 'var(--text)'}">${load.toFixed(2)}</span>`)
 
-    // Logs
-    const now = new Date()
-    const fmt = d => d.toLocaleTimeString('en-GB')
-    const events = [
-      { t: new Date(now - 8000),   c: '#4ade80', m: 'nginx: GET / — 200 OK' },
-      { t: new Date(now - 42000),  c: '#4fa8d8', m: 'tailscaled: peer keepalive' },
-      { t: new Date(now - 95000),  c: '#4ade80', m: 'smbd: session opened for services' },
-      { t: new Date(now - 190000), c: '#fbbf24', m: 'fail2ban: 1 IP banned [sshd]' },
-      { t: new Date(now - 330000), c: '#4fa8d8', m: 'cloudflared: tunnel heartbeat OK' },
-      { t: new Date(now - 720000), c: '#4ade80', m: 'unattended-upgrades: system up to date' },
-    ]
+    // ── Memory summary ──
+    set('memused', `<span style="color:var(--accent2)">${d.memory.used_gb} GB / ${d.memory.total_gb} GB</span>`)
+
+    // ── CPU cores ──
+    const cores = Object.entries(d.cpu_usage).filter(([k]) => k !== 'cpu')
+    cores.forEach(([, pct], i) => {
+      setText(`cpu${i}pct`, pct + '%')
+      setWidth(`cpu${i}bar`, pct)
+    })
+
+    // ── Memory bars ──
+    setWidth('membar',   d.memory.used_pct);   setText('mem_pct',   d.memory.used_pct + '%')
+    setWidth('cachebar', d.memory.cached_pct); setText('cache_pct', d.memory.cached_pct + '%')
+    setWidth('swapbar',  d.memory.swap_pct);   setText('swap_pct',  d.memory.swap_pct + '%')
+
+    // ── Storage ──
+    const storageEl = document.getElementById('storage-bars')
+    if (storageEl) {
+      storageEl.innerHTML = d.storage.map(s => s.error ? `
+        <div style="margin-bottom:16px">
+          <div style="font-size:0.82rem;color:var(--muted)">${s.label} — unavailable</div>
+        </div>` : `
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:6px">
+            <span style="font-weight:500">${s.label}</span>
+            <span style="font-family:var(--font-mono);font-size:0.75rem;color:var(--muted)">${s.used_gb} GB / ${s.total_gb} GB</span>
+          </div>
+          <div class="prog-track">
+            <div class="prog-fill ${s.used_pct > 85 ? 'prog-red' : s.used_pct > 65 ? 'prog-yellow' : 'prog-blue'}"
+                 style="width:${s.used_pct}%"></div>
+          </div>
+        </div>`).join('')
+    }
+
+    // ── Network ──
+    setText('netRx',    d.network.rx_rate)
+    setText('netTx',    d.network.tx_rate)
+    setText('netTotal', d.network.rx_total)
+
+    // ── Fail2ban ──
+    setText('f2bBanned', d.fail2ban.currently_banned)
+    setText('f2bTotal',  d.fail2ban.total_banned)
+
+    // ── Services ──
+    // re-render service list with live status
+    const svcContainer = document.querySelector('.card .uptime-badge')?.closest('.card')
+    const svcList = document.querySelector('[id^="svc-"]')?.parentElement
+    if (d.services) {
+      const svcParent = document.querySelector('.badge-up')?.closest('[style*="flex-direction:column"]')
+      if (svcParent) {
+        svcParent.innerHTML = d.services.map(s => `
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-radius:9px;background:rgba(255,255,255,0.02);border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:10px">
+              <div style="width:7px;height:7px;border-radius:50%;background:${s.up ? 'var(--green)' : 'var(--red)'};${s.up ? 'animation:pulse 2s infinite' : ''}"></div>
+              <div>
+                <div style="font-size:0.88rem;font-weight:500">${s.name}</div>
+                <div style="font-family:var(--font-mono);font-size:0.7rem;color:var(--muted)">${s.port}</div>
+              </div>
+            </div>
+            <span class="${s.up ? 'badge-up' : 'badge-down'}">${s.up ? 'Up' : 'Down'}</span>
+          </div>`).join('')
+      }
+    }
+
+    // ── Logs ──
+    const sourceColors = { nginx: '#4ade80', 'anni-website': '#4fa8d8', 'anni-stats': '#a78bfa' }
     const logEl = document.getElementById('eventLog')
-    if (logEl) logEl.innerHTML = events.map(e =>
-      `<div style="display:flex;gap:14px"><span style="color:var(--accent);flex-shrink:0">${fmt(e.t)}</span><span style="color:${e.c}">${e.m}</span></div>`
-    ).join('')
+    if (logEl && d.logs.length) {
+      logEl.innerHTML = d.logs.map(l => `
+        <div style="display:flex;gap:14px">
+          <span style="color:var(--accent);flex-shrink:0">${l.source}</span>
+          <span style="color:${sourceColors[l.source] || 'var(--muted)'};">${l.message}</span>
+        </div>`).join('')
+    }
 
+    // ── Last updated ──
     const lu = document.getElementById('lastUpdate')
-    if (lu) lu.textContent = fmt(now)
+    if (lu) lu.textContent = new Date().toLocaleTimeString('en-GB')
   }
 
   updateStats()

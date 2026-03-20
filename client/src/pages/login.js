@@ -16,12 +16,15 @@ export async function renderLogin(root) {
   } catch (_) { /* backend not reachable, show login */ }
 
   const errorMessages = {
-    not_authorized: '⛔ Your account isn\'t on the access list.',
+    not_authorized: '⛔ Your account isn\'t on the admin list.',
     invalid_state:  '⚠️ Login session expired. Please try again.',
     token_failed:   '❌ OAuth token exchange failed. Try again.',
     session_error:  '❌ Couldn\'t save your session. Try again.',
     server_error:   '❌ Something went wrong on the server.',
   }
+
+  const meta = await (window.__APP_META_PROMISE || Promise.resolve({ devMode: false }))
+  const showDevLogin = !!meta?.devMode
 
   root.innerHTML = `
     <section style="min-height:80vh;display:flex;align-items:center;justify-content:center;padding:60px 20px">
@@ -30,11 +33,10 @@ export async function renderLogin(root) {
           <div style="text-align:center;margin-bottom:32px">
             <div style="font-size:2.4rem;margin-bottom:14px">🔐</div>
             <h1 style="font-family:var(--font-head);font-size:1.6rem;font-weight:800;letter-spacing:-0.025em;margin-bottom:8px">
-              Dev Login
+              Organizer Login
             </h1>
             <p style="color:var(--muted);font-size:0.88rem;line-height:1.6">
-              Access the status dashboard and private tools.<br>
-              Whitelisted accounts only.
+              Sign in with GitHub, Discord, or Google to access the Organizer dashboard.
             </p>
           </div>
 
@@ -70,9 +72,15 @@ export async function renderLogin(root) {
             </a>
           </div>
 
+          ${showDevLogin ? `
+          <div class="dev-login">
+            <p style="text-align:center;color:var(--muted);font-size:0.8rem;margin-bottom:10px">Local testing</p>
+            <button class="btn btn-ghost" id="devLoginBtn" style="width:100%;justify-content:center">Use Dev Login →</button>
+          </div>` : ''}
+
           <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);text-align:center">
             <p style="font-size:0.74rem;color:var(--muted);line-height:1.6">
-              Only whitelisted accounts are granted access.<br>
+              Anyone can sign in — you'll start on the free plan.<br>
               All login attempts are logged server-side.
             </p>
           </div>
@@ -86,6 +94,30 @@ export async function renderLogin(root) {
       </div>
     </section>
   `
+
+  if (showDevLogin) {
+    const devBtn = document.getElementById('devLoginBtn')
+    devBtn?.addEventListener('click', async () => {
+      devBtn.disabled = true
+      devBtn.textContent = 'Logging in...'
+      try {
+        const res = await fetch('/api/dev/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ role: 'admin', name: 'Dev Admin' }),
+        })
+        if (!res.ok) throw new Error('dev login failed')
+        const data = await res.json()
+        renderLoggedIn(root, data.user)
+      } catch (err) {
+        devBtn.disabled = false
+        devBtn.textContent = 'Use Dev Login →'
+        const toast = (await import('../main.js')).showToast
+        toast?.('Dev login failed')
+      }
+    })
+  }
 }
 
 function renderLoggedIn(root, user) {
@@ -104,8 +136,8 @@ function renderLoggedIn(root, user) {
             Authenticated via ${user.provider}
           </p>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <button class="btn btn-primary" onclick="navigate('status')" style="justify-content:center">
-              Open Status Dashboard →
+            <button class="btn btn-primary" onclick="navigate('organizer')" style="justify-content:center">
+              Open Organizer →
             </button>
             <button class="btn btn-ghost" onclick="doLogout()" style="justify-content:center">
               Sign out

@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Vite)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd client && npm.cmd run dev"],
+      "port": 3000
+    },
+    {
+      "name": "Backend (Node)",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd server && npm.cmd run dev"],
+      "port": 4000
+    },
+    {
+      "name": "Stats API (Python)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["stats/stats.py"],
+      "port": 5000
+    }
+  ]
+}

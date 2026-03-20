@@ -1,0 +1,70 @@
+/* ── About page styles ── */
+
+.about-fact-card {
+  align-items: center !important;
+}
+
+.about-fact-icon {
+  width: 24px;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.about-fact-label {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  line-height: 1.35;
+}
+
+@media (max-width: 980px) {
+  .about-layout {
+    grid-template-columns: 1fr !important;
+    gap: 32px !important;
+  }
+  .about-sidebar {
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 680px) {
+  .about-facts-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .about-layout {
+    gap: 28px !important;
+  }
+  .about-lead-card,
+  .about-main .card,
+  .about-sidebar .card {
+    padding: 22px 20px;
+  }
+  .about-fact-card {
+    padding: 15px 18px !important;
+  }
+  .about-lead-text {
+    font-size: 1rem !important;
+    line-height: 1.75 !important;
+  }
+  .about-body-text {
+    font-size: 0.95rem !important;
+    line-height: 1.72 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-intro {
+    margin-bottom: 42px !important;
+  }
+  .about-fact-card {
+    gap: 10px !important;
+    align-items: center !important;
+  }
+  .about-sidebar .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

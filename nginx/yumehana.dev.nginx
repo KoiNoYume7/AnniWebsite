@@ -1,45 +1,48 @@
-# ──────────────────────────────────────────────────────────
-#  nginx config for yumehana.dev
-#  Place at: /etc/nginx/sites-available/yumehana.dev
-#  Then: sudo ln -s /etc/nginx/sites-available/yumehana.dev /etc/nginx/sites-enabled/
-#        sudo nginx -t && sudo systemctl reload nginx
-# ──────────────────────────────────────────────────────────
-
 server {
     listen 80;
     server_name yumehana.dev www.yumehana.dev;
 
-    # Cloudflare Tunnel handles HTTPS — nginx just serves locally
-    root /var/www/html;
+    root /srv/storage/AnniWebsite;
     index index.html;
 
-    # ── Static site (AnniWebsite client/dist/) ──
+    access_log /srv/backup/AnniWebsite/logs/nginx/access.log;
+    error_log  /srv/backup/AnniWebsite/logs/nginx/error.log;
+
+    # ── Frontend SPA ──
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # ── API proxy → AnniBackend on :4000 ──
-    location /api/ {
-        proxy_pass         http://127.0.0.1:4000;
-        proxy_http_version 1.1;
-
-        proxy_set_header   Host              $host;
-        proxy_set_header   X-Real-IP         $remote_addr;
-        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto $scheme;
-
-        # Needed for sessions/cookies to work through the proxy
-        proxy_set_header   Cookie            $http_cookie;
-        proxy_pass_header  Set-Cookie;
-
-        # Timeouts
-        proxy_connect_timeout 10s;
-        proxy_read_timeout    30s;
+    # ── Stats API → :5000 (must stay above catch-all) ──
+    location /api/stats {
+        proxy_pass          http://127.0.0.1:5000;
+        proxy_http_version  1.1;
+        proxy_set_header    Host              $host;
+        proxy_set_header    X-Real-IP         $remote_addr;
+        proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout    10s;
     }
 
+    # ── All other API traffic → Node :4000 ──
+    location /api/ {
+        proxy_pass          http://127.0.0.1:4000;
+        proxy_http_version  1.1;
+        proxy_set_header    Host              $host;
+        proxy_set_header    X-Real-IP         $remote_addr;
+        proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header    X-Forwarded-Proto $scheme;
+        proxy_set_header    Cookie            $http_cookie;
+        proxy_pass_header   Set-Cookie;
+        proxy_set_header    Connection        '';
+        proxy_connect_timeout 10s;
+        proxy_read_timeout    60s;
+    }
+
+    # NOTE: /api/stripe/webhook will need proxy_request_buffering off later
+
     # ── Security headers ──
-    add_header X-Frame-Options        "SAMEORIGIN"   always;
-    add_header X-Content-Type-Options "nosniff"      always;
-    add_header Referrer-Policy        "strict-origin" always;
-    add_header X-XSS-Protection       "1; mode=block" always;
+    add_header X-Frame-Options        "SAMEORIGIN"    always;
+    add_header X-Content-Type-Options "nosniff"       always;
+    add_header Referrer-Policy        "strict-origin"  always;
 }
