@@ -46,10 +46,13 @@ function setupReveal() {
 
 export async function navigate(to) {
   closeNavMenu()
-  const raw  = to !== undefined ? String(to) : getRoute()
-  const hash = raw.replace(/^#\/?/, '').split('?')[0].split('/')[0]
+  const raw     = to !== undefined ? String(to) : getRoute()
+  const cleaned = raw.replace(/^#\/?/, '').split('?')[0]
+  const parts   = cleaned.split('/')
+  const hash    = parts[0] || ''
+  const subpath = parts.slice(1).join('/')           // e.g. 'rpi4-setup-2026' for blog/slug
 
-  const target = `#/${hash}`
+  const target = subpath ? `#/${hash}/${subpath}` : `#/${hash}`
   if (location.hash !== target) history.replaceState(null, '', target)
 
   const render = routes[hash] || renderHome
@@ -61,7 +64,7 @@ export async function navigate(to) {
   void root.offsetWidth
   root.classList.add('page-enter')
 
-  await render(root)
+  await render(root, subpath)                        // subpath passed as second arg
 
   document.querySelectorAll('.nav-link[data-route]').forEach(el => {
     el.classList.toggle('active', el.dataset.route === hash)
