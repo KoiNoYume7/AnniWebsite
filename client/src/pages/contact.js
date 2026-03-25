@@ -1,6 +1,3 @@
-// Replace with your actual Discord webhook URL
-const DISCORD_WEBHOOK_URL = 'YOUR_DISCORD_WEBHOOK_URL_HERE'
-
 export async function renderContact(root) {
   root.innerHTML = `
     <section class="section">
@@ -112,25 +109,30 @@ export async function renderContact(root) {
     }
 
     try {
-      if (DISCORD_WEBHOOK_URL === 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
-        // Demo mode — show success without actually sending
-        await new Promise(r => setTimeout(r, 800))
-        setStatus('✅ Message sent! (Demo mode — configure your webhook URL to enable real delivery)', 'var(--green)')
-      } else {
-        const res = await fetch(DISCORD_WEBHOOK_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ embeds: [embed] }),
-        })
-        if (!res.ok) throw new Error('Webhook failed')
-        setStatus('✅ Message sent! I\'ll reply when I\'m back online.', 'var(--green)')
-        document.getElementById('cf-name').value = ''
-        document.getElementById('cf-email').value = ''
-        document.getElementById('cf-subject').value = ''
-        document.getElementById('cf-message').value = ''
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject, message, embed }),
+      })
+      if (!res.ok) {
+        let errMsg = ''
+        try {
+          const err = await res.json()
+          errMsg = err?.error || ''
+        } catch {
+          const text = await res.text().catch(() => '')
+          errMsg = text ? text.slice(0, 160) : ''
+        }
+        const prefix = `HTTP ${res.status}`
+        throw new Error(errMsg ? `${prefix}: ${errMsg}` : prefix)
       }
+      setStatus('✅ Message sent! I\'ll reply when I\'m back online.', 'var(--green)')
+      document.getElementById('cf-name').value = ''
+      document.getElementById('cf-email').value = ''
+      document.getElementById('cf-subject').value = ''
+      document.getElementById('cf-message').value = ''
     } catch (e) {
-      setStatus('❌ Failed to send. Try Discord directly.', 'var(--red)')
+      setStatus(`❌ ${e?.message || 'Failed to send. Try Discord directly.'}`, 'var(--red)')
     }
 
     btn.disabled = false

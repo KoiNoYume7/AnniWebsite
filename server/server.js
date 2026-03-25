@@ -13,6 +13,7 @@ import { registerUserRoutes } from './routes/user.js'
 const app  = express()
 const PORT = process.env.PORT || 4000
 const DEV_MODE = process.env.DEV_MODE === 'true' || process.env.NODE_ENV === 'development'
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || ''
 const FRONTEND = DEV_MODE
   ? (process.env.FRONTEND_URL_DEV || 'http://localhost:3000')
   : (process.env.FRONTEND_URL || 'https://yumehana.dev')
@@ -362,6 +363,49 @@ app.get('/api/meta', (req, res) => {
   res.json({ ok: true, devMode: DEV_MODE, frontend: FRONTEND })
 })
 
+// Contact form -> Discord webhook
+app.post('/api/contact', async (req, res) => {
+  if (!DISCORD_WEBHOOK_URL) {
+    return res.status(503).json({ ok: false, error: 'Contact form is not configured' })
+  }
+
+  const name = String(req.body?.name || '').trim()
+  const email = String(req.body?.email || '').trim()
+  const subject = String(req.body?.subject || '').trim()
+  const message = String(req.body?.message || '').trim()
+
+  if (!name || !message) {
+    return res.status(400).json({ ok: false, error: 'Name and message are required' })
+  }
+
+  const embed = {
+    title: `📬 New message: ${subject || '(no subject)'}`,
+    color: 0x63d2be,
+    fields: [
+      { name: 'From', value: name, inline: true },
+      { name: 'Email', value: email || 'not provided', inline: true },
+      { name: 'Message', value: message },
+    ],
+    footer: { text: 'yumehana.dev contact form' },
+    timestamp: new Date().toISOString(),
+  }
+
+  try {
+    const discordRes = await fetch(DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] }),
+    })
+
+    if (!discordRes.ok) {
+      return res.status(502).json({ ok: false, error: 'Failed to deliver message' })
+    }
+
+    res.json({ ok: true })
+  } catch {
+    res.status(502).json({ ok: false, error: 'Failed to deliver message' })
+  }
+})
 // ── Start ──
 if (DEV_MODE) {
   console.log('⚙️  DEV_MODE enabled — /api/dev/login available for local testing')

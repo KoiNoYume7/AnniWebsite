@@ -10,19 +10,20 @@
 
 [Unit]
 Description=AnniBackend — OAuth API for yumehana.dev
-After=network.target
+After=network.target srv-storage.mount
 Wants=network-online.target
+BindsTo=srv-storage.mount
 
 [Service]
 Type=simple
-User=services
-WorkingDirectory=/home/services/AnniWebsite/server
+User=akira
+WorkingDirectory=/srv/storage/AnniWebsite/server
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5
 
 # Load secrets from .env file
-EnvironmentFile=/home/services/AnniWebsite/server/.env
+EnvironmentFile=/srv/storage/AnniWebsite/server/.env
 
 # Logging
 StandardOutput=journal
@@ -33,7 +34,7 @@ SyslogIdentifier=anni-website
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
-ReadWritePaths=/home/services/AnniWebsite/server
+ReadWritePaths=/srv/storage/AnniWebsite/server
 
 [Install]
 WantedBy=multi-user.target
