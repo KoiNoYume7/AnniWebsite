@@ -6,20 +6,20 @@ Things that aren't on the roadmap yet but are worth tracking. Not commitments �
 
 ## ~~Spotify "Now Playing" Integration~~
 
-**Decision: Implemented.** Discord-style presence widget on the home page. Shows album art, track name, artist, progress bar, and "listen along" link. Auto-hides when nothing is playing.
+**Decision: Implemented (v2.1).** Live Activity widget in the builder section of the home page. Shows album art with glow, track name (marquee for long titles), artist, animated progress bar, equalizer bars, and recently played / top tracks strip.
 
 ### How it works
 
-- **Backend**: `server/routes/spotify.js` — OAuth flow, token auto-refresh, `/api/spotify/now-playing` + `/api/spotify/top-tracks`
-- **Frontend**: `client/src/components/spotify-widget.js` — polls every 30s (IntersectionObserver, only when visible), smooth progress interpolation
+- **Backend**: `server/routes/spotify.js` — OAuth flow, token auto-refresh, SSE streaming (`/api/spotify/stream`), REST fallback (`/api/spotify/now-playing`), `/api/spotify/recent-tracks`, `/api/spotify/top-tracks`
+- **Frontend**: `client/src/components/spotify-widget.js` — SSE-based (EventSource), REST fallback on error, smooth progress interpolation, dominant color extraction from album art
 - **Setup**: One-time admin OAuth at `/api/spotify/auth`, refresh token stored in `.env`
-- **Design**: Lives between hero and featured projects on the home page. Hidden when not playing.
+- **Design**: Integrated into the "builder" section with a `section-eyebrow` label. Three states: Now Playing (green dot + equalizer), Paused (amber dot), Offline (grey dot, "Not listening right now"). Never fully hides.
+- **Floating panel**: `client/src/components/live-activity-panel.js` — dismissible bottom-right panel on all non-home routes
 
-### Future enhancements
+### Possible future enhancements
 
-- Top tracks / top artists section (Spotify Wrapped-style stats)
-- Organizer sidebar widget
 - Optional privacy toggle (env var to disable broadcasting)
+- Genre breakdown or listening stats page
 
 ---
 

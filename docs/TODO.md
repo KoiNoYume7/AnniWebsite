@@ -20,7 +20,7 @@
 
 **Fixed**: Sign-out bug — `/api/auth/logout` was shadowed by `/api/auth/:provider` (Express matched `:provider = "logout"`). Route moved above the parameterized route.
 
-**Spotify**: Full "Now Playing" integration — SSE streaming from `/api/spotify/stream` (server polls Spotify every 10s, pushes deltas). Home-page hero widget has a spinning vinyl, color-adaptive glow from the album art, marquee for long titles, crossfade on track change, and a "Recently played" carousel backed by `/api/spotify/recent-tracks` (cached 3 min). A floating dismissible Live Activity side panel (`client/src/components/live-activity-panel.js`) shows the same track on every non-home route.
+**Spotify (v2.1)**: Live Activity widget in the builder section of the home page. SSE streaming from `/api/spotify/stream` (server polls every 10s, pushes deltas). Widget shows album art with subtle glow, track name (marquee for long titles), artist, animated equalizer + progress bar, and a recently played / top tracks strip with tab toggle. Three states: Now Playing, Paused, Offline — never fully hides. Styled to match site card design (`var(--surface)`, `var(--border)`). A floating dismissible panel (`live-activity-panel.js`) shows the same track on every non-home route.
 
 Next up: **Phase 2** — feature modules (todos, calendar, reminders, finance).
 
