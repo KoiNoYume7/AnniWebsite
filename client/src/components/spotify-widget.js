@@ -38,10 +38,6 @@ export function mountSpotifyWidget(container) {
 
         <div class="sp-body" id="sp-body">
           <div class="sp-art-wrap" id="sp-art-wrap">
-            <div class="sp-vinyl" id="sp-vinyl">
-              <div class="sp-vinyl-grooves"></div>
-              <div class="sp-vinyl-center"></div>
-            </div>
             <div class="sp-art" id="sp-art"></div>
             <div class="sp-art-glow" id="sp-art-glow"></div>
           </div>
@@ -153,7 +149,6 @@ function applyState(data) {
   const body      = document.getElementById('sp-body')
   const artEl     = document.getElementById('sp-art')
   const glowEl    = document.getElementById('sp-art-glow')
-  const vinylEl   = document.getElementById('sp-vinyl')
   const trackEl   = document.getElementById('sp-track')
   const artistEl  = document.getElementById('sp-artist')
   const eqEl      = document.getElementById('sp-eq')
@@ -184,9 +179,6 @@ function applyState(data) {
   }
 
   eqEl.className = isPlaying ? 'sp-eq sp-eq--active' : 'sp-eq'
-
-  // Vinyl spin state
-  vinylEl.classList.toggle('sp-vinyl--spinning', isPlaying)
 
   if (hasTrack) {
     const { track } = data
@@ -396,32 +388,17 @@ function injectStyles() {
       --sp-glow-faint: rgba(30,215,96,0.1);
     }
     .sp-activity-inner {
-      border-radius: 18px;
-      background:
-        radial-gradient(120% 160% at 0% 0%, var(--sp-glow-faint), transparent 55%),
-        var(--card-bg, rgba(255,255,255,0.03));
-      border: 1px solid var(--border, rgba(255,255,255,0.06));
+      border-radius: var(--radius-lg, 20px);
+      background: var(--surface, rgba(255,255,255,0.04));
+      border: 1px solid var(--border, rgba(255,255,255,0.07));
       overflow: hidden;
       position: relative;
-      transition: border-color 0.5s, box-shadow 0.5s, background 0.5s;
+      transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
     }
-    .sp-activity-inner::before {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border-radius: inherit;
-      padding: 1px;
-      background: linear-gradient(135deg, var(--sp-glow), transparent 40%, transparent 60%, var(--sp-glow) 100%);
-      -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor;
-              mask-composite: exclude;
-      opacity: 0;
-      transition: opacity 0.6s;
-      pointer-events: none;
-    }
-    .sp-activity-inner:has(.sp-dot--live)::before { opacity: 0.8; }
-    .sp-activity-inner:has(.sp-dot--live) {
-      box-shadow: 0 20px 50px -20px var(--sp-glow);
+    .sp-activity-inner:hover {
+      border-color: var(--border-h, rgba(99,210,190,0.35));
+      transform: translateY(-3px);
+      box-shadow: var(--shadow, 0 20px 60px rgba(0,0,0,0.4));
     }
 
     /* Header */
@@ -441,6 +418,9 @@ function injectStyles() {
     }
     .sp-activity-inner:has(.sp-dot--live) .sp-header-label {
       color: var(--sp-green);
+    }
+    .sp-activity-inner:has(.sp-dot--live) {
+      border-color: rgba(30, 215, 96, 0.2);
     }
 
     /* Status dot */
@@ -489,79 +469,42 @@ function injectStyles() {
       position: relative;
     }
 
-    /* Art + vinyl + glow */
+    /* Art + glow */
     .sp-art-wrap {
       position: relative;
       flex-shrink: 0;
-      width: 64px;
-      height: 64px;
+      width: 56px;
+      height: 56px;
     }
-
-    /* Vinyl disc — sits under art, pokes out slightly */
-    .sp-vinyl {
-      position: absolute;
-      inset: 0;
-      width: 64px;
-      height: 64px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 50% 50%, #1a1a1a 0 22%, #0a0a0a 23% 100%);
-      transform: translateX(12px) rotate(0deg);
-      transition: transform 0.5s cubic-bezier(.2,.8,.2,1), opacity 0.4s;
-      opacity: 0;
-      z-index: 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.04);
-    }
-    .sp-body--has-track .sp-vinyl { opacity: 1; transform: translateX(26px) rotate(0deg); }
-    .sp-vinyl--spinning { animation: sp-vinyl-spin 5s linear infinite; animation-play-state: running; }
-    .sp-vinyl-grooves {
-      position: absolute; inset: 6px;
-      border-radius: 50%;
-      background: repeating-radial-gradient(circle at 50% 50%,
-        transparent 0 2px,
-        rgba(255,255,255,0.04) 2px 3px);
-      opacity: 0.7;
-    }
-    .sp-vinyl-center {
-      position: absolute;
-      left: 50%; top: 50%;
-      width: 14px; height: 14px;
-      border-radius: 50%;
-      background: var(--sp-glow, #1DB954);
-      transform: translate(-50%, -50%);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 0 6px var(--sp-glow);
-    }
-
     .sp-art {
-      position: absolute;
-      inset: 0;
-      width: 64px;
-      height: 64px;
-      border-radius: 12px;
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
       background-size: cover;
       background-position: center;
-      background-color: rgba(30, 215, 96, 0.08);
+      background-color: var(--surface, rgba(255,255,255,0.04));
+      position: relative;
       z-index: 1;
-      transition: transform 0.35s cubic-bezier(.2,.8,.2,1);
-      box-shadow: 0 6px 20px -8px rgba(0,0,0,0.6);
+      transition: transform 0.2s;
     }
-    .sp-body--has-track:hover .sp-art { transform: scale(1.04) rotate(-1deg); }
+    .sp-body--has-track:hover .sp-art { transform: scale(1.03); }
 
     /* Crossfade in */
     .sp-art--in { animation: sp-art-in 0.5s cubic-bezier(.2,.8,.2,1); }
 
     .sp-art-glow {
       position: absolute;
-      inset: -8px;
-      border-radius: 18px;
+      inset: -6px;
+      border-radius: 14px;
       background-size: cover;
       background-position: center;
-      filter: blur(22px) saturate(1.8);
+      filter: blur(16px) saturate(1.4);
       opacity: 0;
-      z-index: -1;
-      transition: opacity 0.5s;
+      z-index: 0;
+      transition: opacity 0.4s;
     }
-    .sp-body--has-track .sp-art-glow { opacity: 0.45; }
-    .sp-activity-inner:has(.sp-dot--paused) .sp-art-glow { opacity: 0.2; }
+    .sp-body--has-track .sp-art-glow { opacity: 0.2; }
+    .sp-activity-inner:has(.sp-dot--paused) .sp-art-glow { opacity: 0.1; }
     .sp-activity-inner:has(.sp-dot--off) .sp-art-glow    { opacity: 0; }
 
     /* Details */
@@ -614,23 +557,13 @@ function injectStyles() {
     }
     .sp-bar-fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--sp-green) 0%, var(--sp-glow) 100%);
+      background: var(--sp-green);
       border-radius: 2px;
       transition: width 1s linear;
-      box-shadow: 0 0 8px -1px var(--sp-glow);
     }
     .sp-bar-glow {
-      position: absolute;
-      top: 50%; left: 0;
-      width: 10px; height: 10px;
-      background: var(--sp-green);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      box-shadow: 0 0 10px var(--sp-green);
-      opacity: 0;
-      transition: opacity 0.3s, left 1s linear;
+      display: none;
     }
-    .sp-activity-inner:has(.sp-dot--live) .sp-bar-glow { opacity: 1; }
 
     .sp-times {
       display: flex;
@@ -651,8 +584,8 @@ function injectStyles() {
       transform: translateY(-2px);
       transition: opacity 0.2s, transform 0.2s;
     }
-    .sp-activity-inner:hover .sp-open { opacity: 0.7; transform: translateY(0); }
-    .sp-open:hover { opacity: 1 !important; transform: scale(1.08) !important; }
+    .sp-activity-inner:hover .sp-open { opacity: 0.6; transform: translateY(0); }
+    .sp-open:hover { opacity: 1 !important; }
 
     /* ── Recent / Top tracks strip ── */
     .sp-recent {
@@ -802,28 +735,18 @@ function injectStyles() {
       to   { opacity: 1; transform: translateY(0); }
     }
     @keyframes sp-art-in {
-      from { opacity: 0; transform: scale(0.85) rotate(-6deg); filter: blur(4px); }
-      to   { opacity: 1; transform: scale(1) rotate(0); filter: blur(0); }
-    }
-    @keyframes sp-vinyl-spin {
-      from { transform: translateX(26px) rotate(0deg); }
-      to   { transform: translateX(26px) rotate(360deg); }
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
     }
 
     @media (max-width: 480px) {
-      .sp-body { padding: 14px 16px 14px; gap: 14px; }
-      .sp-art-wrap, .sp-art, .sp-vinyl { width: 56px; height: 56px; }
-      .sp-body--has-track .sp-vinyl { transform: translateX(22px); }
-      @keyframes sp-vinyl-spin {
-        from { transform: translateX(22px) rotate(0deg); }
-        to   { transform: translateX(22px) rotate(360deg); }
-      }
+      .sp-body { padding: 14px 16px 14px; gap: 12px; }
+      .sp-art-wrap, .sp-art { width: 48px; height: 48px; }
       .sp-recent { padding: 10px 14px 12px; }
       .sp-recent-card { width: 128px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .sp-vinyl--spinning { animation: none; }
       .sp-track--marquee  { animation: none; }
       .sp-eq span         { animation: none !important; }
       .sp-tracks-loading span { animation: none; }
