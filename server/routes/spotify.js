@@ -1,7 +1,8 @@
 // ── Spotify "Now Playing" integration ──
 // Single-user: admin does a one-time OAuth to get a refresh token, stored in .env.
 // The server auto-refreshes access tokens (they expire in 1 hour).
-// Public endpoints: /api/spotify/now-playing, /api/spotify/top-tracks
+// SSE streaming: server polls Spotify every 10s, pushes changes to connected clients.
+// Public endpoints: /api/spotify/now-playing, /api/spotify/stream, /api/spotify/top-tracks
 // Admin-only: /api/spotify/auth, /api/spotify/callback (one-time setup)
 
 import fetch from 'node-fetch'
@@ -19,6 +20,11 @@ let tokenExpires = 0  // unix ms
 
 // CSRF state for the OAuth flow
 const oauthStates = new Map()
+
+// ── SSE state ──
+const sseClients = new Set()
+let cachedState = { ok: true, playing: false }
+let pollInterval = null
 
 // ── Token management ──
 
@@ -59,62 +65,126 @@ async function getAccessToken() {
   }
 }
 
+// ── Fetch now playing (shared by poll + REST endpoint) ──
+
+async function fetchNowPlaying() {
+  const configured = !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET)
+  if (!configured || !SPOTIFY_REFRESH_TOKEN) {
+    return { ok: true, playing: false, reason: 'not_configured' }
+  }
+
+  const token = await getAccessToken()
+  if (!token) return { ok: true, playing: false, reason: 'token_error' }
+
+  try {
+    const spotRes = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { 'Authorization': `Bearer ${token}` },
+    })
+
+    if (spotRes.status === 204 || spotRes.status === 202) {
+      return { ok: true, playing: false }
+    }
+
+    if (!spotRes.ok) {
+      console.error('[spotify] Now playing error:', spotRes.status)
+      return { ok: true, playing: false, reason: 'api_error' }
+    }
+
+    const data = await spotRes.json()
+
+    if (!data.item) {
+      return { ok: true, playing: false }
+    }
+
+    const track = data.item
+    return {
+      ok: true,
+      playing: data.is_playing,
+      paused:  !data.is_playing,
+      track: {
+        name:        track.name,
+        artist:      track.artists.map(a => a.name).join(', '),
+        album:       track.album.name,
+        albumArt:    track.album.images?.[1]?.url || track.album.images?.[0]?.url || null,
+        url:         track.external_urls?.spotify || null,
+        duration_ms: track.duration_ms,
+        progress_ms: data.progress_ms,
+      },
+    }
+  } catch (err) {
+    console.error('[spotify] Now playing error:', err.message)
+    return { ok: true, playing: false, reason: 'fetch_error' }
+  }
+}
+
+// ── SSE broadcast ──
+
+function broadcast(data) {
+  const msg = `data: ${JSON.stringify(data)}\n\n`
+  for (const client of sseClients) {
+    client.write(msg)
+  }
+}
+
+async function pollSpotify() {
+  const state = await fetchNowPlaying()
+  const changed = JSON.stringify(state) !== JSON.stringify(cachedState)
+  cachedState = state
+  if (changed) broadcast(state)
+}
+
+function startPolling() {
+  if (pollInterval) return
+  pollSpotify()
+  pollInterval = setInterval(pollSpotify, 10_000)
+}
+
+function stopPollingIfEmpty() {
+  if (sseClients.size === 0 && pollInterval) {
+    clearInterval(pollInterval)
+    pollInterval = null
+  }
+}
+
 // ── Route registration ──
 
 export function registerSpotifyRoutes(app, { FRONTEND, requireAuth }) {
   const configured = !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET)
 
-  // ── GET /api/spotify/now-playing — public ──
+  // ── GET /api/spotify/now-playing — public (REST fallback) ──
   app.get('/api/spotify/now-playing', async (_req, res) => {
-    if (!configured || !SPOTIFY_REFRESH_TOKEN) {
-      return res.json({ ok: true, playing: false, reason: 'not_configured' })
+    // Return cached state if fresh, otherwise fetch
+    if (pollInterval) {
+      return res.json(cachedState)
     }
+    const state = await fetchNowPlaying()
+    cachedState = state
+    res.json(state)
+  })
 
-    const token = await getAccessToken()
-    if (!token) {
-      return res.json({ ok: true, playing: false, reason: 'token_error' })
-    }
+  // ── GET /api/spotify/stream — SSE endpoint ──
+  app.get('/api/spotify/stream', (req, res) => {
+    res.writeHead(200, {
+      'Content-Type':  'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection':    'keep-alive',
+      'X-Accel-Buffering': 'no',  // disable nginx buffering for SSE
+    })
 
-    try {
-      const spotRes = await fetch('https://api.spotify.com/v1/me/player/currently-playing', {
-        headers: { 'Authorization': `Bearer ${token}` },
-      })
+    // Send current state immediately
+    res.write(`data: ${JSON.stringify(cachedState)}\n\n`)
 
-      // 204 = nothing playing, 200 = playing
-      if (spotRes.status === 204 || spotRes.status === 202) {
-        return res.json({ ok: true, playing: false })
-      }
+    sseClients.add(res)
+    startPolling()
 
-      if (!spotRes.ok) {
-        console.error('[spotify] Now playing error:', spotRes.status)
-        return res.json({ ok: true, playing: false, reason: 'api_error' })
-      }
+    // Heartbeat every 30s to keep connection alive
+    const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 30_000)
 
-      const data = await spotRes.json()
-
-      // Not actually playing (paused, ad, etc.)
-      if (!data.is_playing || !data.item) {
-        return res.json({ ok: true, playing: false })
-      }
-
-      const track = data.item
-      res.json({
-        ok: true,
-        playing: true,
-        track: {
-          name:        track.name,
-          artist:      track.artists.map(a => a.name).join(', '),
-          album:       track.album.name,
-          albumArt:    track.album.images?.[1]?.url || track.album.images?.[0]?.url || null,
-          url:         track.external_urls?.spotify || null,
-          duration_ms: track.duration_ms,
-          progress_ms: data.progress_ms,
-        },
-      })
-    } catch (err) {
-      console.error('[spotify] Now playing error:', err.message)
-      res.json({ ok: true, playing: false, reason: 'fetch_error' })
-    }
+    req.on('close', () => {
+      clearInterval(heartbeat)
+      sseClients.delete(res)
+      stopPollingIfEmpty()
+    })
   })
 
   // ── GET /api/spotify/top-tracks — public ──
