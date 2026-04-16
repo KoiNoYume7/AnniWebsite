@@ -1,0 +1,34 @@
+{
+  "name": "KoiNoYume7",
+  "tagline": "Koi for short. The person turning Monster Energy into working infrastructure.",
+  "bio": [
+    "I'm a cybersecurity trainee based in Switzerland, learning how systems break so I can build ones that don't. By day I'm diving into networks, vulnerabilities, and how attackers think. By night I'm running my own infrastructure, self-hosting everything I can, and pushing commits at timestamps that only make sense if you drink enough Monster Energy.",
+    "I call myself a **vibe coder** — I architect systems, debug the weird stuff, and direct where things go. I lean on AI to handle boilerplate so I can focus on the interesting problems. It's not cheating, it's working smart. The ideas, decisions, and 2AM debugging sessions are very much mine.",
+    "When I'm not staring at terminal output, I'm deep in **Star Citizen**, vibing in **Cyberpunk 2077**, or doing long hauls in Euro Truck Simulator 2 with good bass music in my ears. Cars, anime, and gaming round out the rest. Yes, I contain multitudes."
+  ],
+  "facts": [
+    { "icon": "🇨🇭", "label": "Based in Switzerland" },
+    { "icon": "🔐", "label": "Cybersecurity trainee" },
+    { "icon": "🍀", "label": "Monster & Red Bull daily" },
+    { "icon": "🌙", "label": "Best commits after midnight" },
+    { "icon": "🚀", "label": "Star Citizen main" },
+    { "icon": "🎌", "label": "Anime & car enthusiast" },
+    { "icon": "🎵", "label": "Good bass is non-negotiable" },
+    { "icon": "🖥️", "label": "Self-hosts everything" }
+  ],
+  "skills": [
+    { "name": "Python",      "pct": 75 },
+    { "name": "JavaScript",  "pct": 70 },
+    { "name": "HTML / CSS",  "pct": 85 },
+    { "name": "PowerShell",  "pct": 60 },
+    { "name": "C",           "pct": 45 },
+    { "name": "Bash / CLI",  "pct": 80 }
+  ],
+  "infrastructure": [
+    "Linux", "Nginx", "Tailscale", "Cloudflared", "Samba", "Fail2ban", "UFW", "Docker (learning)"
+  ],
+  "learning": [
+    "Penetration Testing", "Network Security", "CTF Challenges", "Reverse Engineering"
+  ],
+  "github_url": "https://github.com/KoiNoYume7"
+}

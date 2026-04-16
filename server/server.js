@@ -348,6 +348,7 @@ app.get('/api/auth/callback/:provider', async (req, res) => {
 // GET /api/auth/logout
 app.get('/api/auth/logout', (req, res) => {
   req.session.destroy(() => {
+    res.clearCookie('connect.sid', { path: '/' })
     res.json({ ok: true })
   })
 })

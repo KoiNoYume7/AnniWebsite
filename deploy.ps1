@@ -7,7 +7,6 @@
 #  Pi layout (SD card — always available):
 #    /opt/anni/www      → built frontend
 #    /opt/anni/server   → Node/Express backend + sessions.db
-#    /opt/anni/stats    → Python stats API
 #
 #  The organizer DB lives on the storage drive at
 #  /srv/storage/AnniWebsite/server/db/organizer.db and is
@@ -27,7 +26,6 @@ $PI_USER   = "akira"
 $PI_HOST   = "yme-04"
 $PI_WEB    = "/opt/anni/www"
 $PI_SERVER = "/opt/anni/server"
-$PI_STATS  = "/opt/anni/stats"
 
 # ── Colours ──
 function Log   { param($m) Write-Host "> $m" -ForegroundColor Cyan }
@@ -146,14 +144,6 @@ if ($DeployServer) {
     } else {
         Fail "Service failed to start - run: journalctl -u anni-website -n 20"
     }
-}
-
-# ── Deploy stats API if folder exists ──
-if (Test-Path "stats") {
-    Log "Deploying stats API..."
-    Invoke-SCP "stats\stats.py" $PI_STATS
-    Invoke-SSH 'sudo systemctl restart anni-stats 2>/dev/null; true'
-    Ok "Stats API deployed"
 }
 
 # ── Done ──

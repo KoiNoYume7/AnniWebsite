@@ -1,0 +1,24 @@
+[
+  {
+    "name": "AnniWebsite",
+    "icon": "🌐",
+    "description": "Personal website + AI life organizer. Built with Vite, vanilla JS, self-hosted. Designed from scratch, no templates.",
+    "tags": ["vite", "frontend", "self-hosted", "vanilla-js"],
+    "phase": "Phase 2",
+    "status": "wip",
+    "featured": true,
+    "sort_order": 1,
+    "url_override": null
+  },
+  {
+    "name": "AnniProxy",
+    "icon": "🔀",
+    "description": "A self-hosted proxy browser backend. Routes and manages web traffic privately — built for people who take their own infrastructure seriously.",
+    "tags": ["self-hosted", "privacy", "proxy", "backend"],
+    "phase": "Early WIP",
+    "status": "wip",
+    "featured": true,
+    "sort_order": 2,
+    "url_override": null
+  }
+]

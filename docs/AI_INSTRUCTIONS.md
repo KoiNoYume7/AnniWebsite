@@ -10,9 +10,9 @@ AnniWebsite is a self-hosted personal website + AI life organizer for KoiNoYume7
 
 - Frontend: Vite + vanilla JS SPA (hash-router, no framework)
 - Backend: Node.js + Express with OAuth + SQLite
-- Stats API: Python `http.server` JSON API for the status dashboard
-- Reverse proxy: nginx on Raspberry Pi 4
-- Hosting: code + static under `/opt/anni/{www,server,stats}` on the SD card; `organizer.db` on the `/srv/storage` external drive (hot-pluggable). `/srv/backup` is a separate backup drive and is not required for the site to run.
+- Content: data-driven — all page content lives in `content/` and is compiled by `scripts/` into `client/src/data/`
+- Reverse proxy: nginx
+- Hosting: code + static under `/opt/anni/{www,server}` on the SD card; `organizer.db` on the `/srv/storage` external drive (hot-pluggable). `/srv/backup` is a separate backup drive and is not required for the site to run.
 
 Primary domain: `https://yumehana.dev`
 
@@ -21,7 +21,29 @@ Primary domain: `https://yumehana.dev`
 Phase 0 (foundation) and Phase 1 (organizer shell) are complete. Phase 2 (feature modules) is next.
 The organizer is the main product — it's a real feature with a live SQLite DB and full auth.
 
+The Pi dashboard (`#/status`) and Python stats API have been **removed** — they didn't fit the site's direction.
+
+The Discord server invite CTA is **disabled** (server not ready yet). The design is preserved but greyed out.
+
 See `docs/TODO.md` for the full roadmap and phase tracker.
+
+---
+
+## Content system
+
+All page content is **data-driven**. Source files live in `content/`, compilers in `scripts/`, output in `client/src/data/` (gitignored).
+
+| Content | Source | Compiler | Output |
+|---|---|---|---|
+| Projects | `content/projects.json` | `scripts/fetch-repos.js` | `client/src/data/projects.json` |
+| About | `content/about.json` | `scripts/compile-about.js` | `client/src/data/about.json` |
+| Devlogs | `content/devlogs/*.md` + `config.json` | `scripts/compile-devlogs.js` | `client/src/data/devlogs.json` |
+
+```bash
+node scripts/compile-all.js   # runs all three
+```
+
+**After editing any `content/` file, re-run the relevant compiler before dev/build.**
 
 ---
 
@@ -29,7 +51,8 @@ See `docs/TODO.md` for the full roadmap and phase tracker.
 
 ```
 client/src/
-  main.js                 ← Thin entry — imports and wires everything, ~30 lines
+  main.js                 ← Thin entry — imports and wires everything
+  data/                   ← Compiled content (gitignored)
   lib/
     router.js             ← Hash router: routes map, navigate(), hashchange
     toast.js              ← showToast()
@@ -43,14 +66,12 @@ client/src/
     nav.js                ← Site navigation
     footer.js             ← Site footer
   pages/                  ← Site pages (one file = one route)
-    home.js               ← Organizer-first hero; also exports prefetchGitHub()
-    about.js
-    projects.js
-    blog.js
-    contact.js
-    login.js
-    status.js             ← Admin-only Pi dashboard
-    organizer.js          ← Stub re-export → ../organizer/index.js (file was relocated)
+    home.js               ← Organizer-first hero, reads data/projects.json for featured
+    about.js              ← Reads data/about.json
+    projects.js           ← Reads data/projects.json, featured/all toggle
+    blog.js               ← Reads data/devlogs.json
+    contact.js            ← POSTs to /api/contact (server-side Discord webhook)
+    login.js              ← OAuth + dev login
   organizer/              ← Self-contained — working on organizer = working in here
     index.js              ← Entry: auth check, shell render, tab switching
     lib/
@@ -64,7 +85,6 @@ client/src/
       reminders.js
       finance.js
       ai-chat.js
-  posts/                  ← Markdown blog posts
   styles/
     global.css            ← Design tokens, reset, starfield, cursor, dev banner, toast
     components.css        ← Shared: buttons, cards, nav, footer, forms, badges, spinner
@@ -74,8 +94,21 @@ client/src/
       about.css           ← About-specific responsive rules
       contact.css         ← Contact-specific responsive rules
 
+content/                  ← Source content (edit these, then compile)
+  projects.json           ← Project metadata, icons, featured flags, sort order
+  about.json              ← Bio, skills, facts, infrastructure, learning
+  devlogs/
+    config.json           ← Devlog metadata (title, subtitle, tags, sort order)
+    *.md                  ← One markdown file per devlog post
+
+scripts/                  ← Content compilers
+  fetch-repos.js          ← Fetches GitHub repos → merges with projects.json → output
+  compile-devlogs.js      ← Compiles markdown + config → devlogs.json
+  compile-about.js        ← Compiles about.json → client data
+  compile-all.js          ← Runs all compilers in sequence
+
 server/
-  server.js              ← Express setup, middleware, auth routes (/api/auth/*)
+  server.js              ← Express setup, middleware, auth routes, /api/contact
   db/
     db.js                ← SQLite singleton (WAL + FK pragmas)
     schema.sql           ← Full schema
@@ -83,10 +116,7 @@ server/
     user.js              ← /api/user/me
   .env.example
   anni-website.service
-
-stats/
-  stats.py               ← Python stats API on :5000
-  anni-stats.service
+  SETUP.md
 
 nginx/
   yumehana.dev.nginx
@@ -94,7 +124,7 @@ nginx/
 docs/
   AI_INSTRUCTIONS.md     ← This file
   TODO.md                ← Organizer roadmap + phase tracker
-  IDEAS.md               ← Unstructured future ideas (Spotify, etc.)
+  IDEAS.md               ← Unstructured future ideas
 ```
 
 ---
@@ -114,23 +144,20 @@ docs/
 
 ```
 Browser → Cloudflare Tunnel (HTTPS) → nginx :80
-  ├── /             → /opt/anni/www/ (static files, SD card)
-  ├── /api/stats    → 127.0.0.1:5000 (Python — explicit block, higher priority)
-  └── /api/*        → 127.0.0.1:4000 (Node/Express, /opt/anni/server)
+  ├── /         → /opt/anni/www/ (static files, SD card)
+  └── /api/*    → 127.0.0.1:4000 (Node/Express, /opt/anni/server)
 ```
 
 Pi directory layout:
 - `/opt/anni/www` — built Vite output (always available)
 - `/opt/anni/server` — Node/Express backend + `sessions.db`
-- `/opt/anni/stats` — Python stats API
 - `/opt/anni/server/db/organizer.db` → **symlink** into `/srv/storage/AnniWebsite/server/db/organizer.db` (the only user data on the hot-pluggable drive)
 
 Invariants:
 - Backend binds loopback only: `127.0.0.1:4000`
-- Stats binds loopback only: `127.0.0.1:5000`
 - `X-Forwarded-Proto` comes from Cloudflare's header (`$http_x_forwarded_proto`), not `$scheme` — nginx is on plain `:80` so `$scheme` is always "http"
 - `/api/stripe/webhook` (Phase 4) needs `proxy_request_buffering off` in nginx
-- When `/srv/storage` is unplugged the backend must degrade gracefully: the organizer goes into "under maintenance" mode, but login/home/blog/projects/stats keep serving
+- When `/srv/storage` is unplugged the backend must degrade gracefully: the organizer goes into "under maintenance" mode, but login/home/blog/projects keep serving
 
 ---
 
@@ -142,9 +169,10 @@ Invariants:
 | `GET /api/user/me` | Required | Full DB user record (organizer uses this) |
 | `GET /api/auth/:provider` | Public | Start OAuth (github/discord/google) |
 | `GET /api/auth/callback/:provider` | Public | OAuth callback → upsert user → redirect `/#/organizer` |
-| `GET /api/auth/logout` | Public | Destroy session |
+| `GET /api/auth/logout` | Public | Destroy session + clear cookie |
 | `GET /api/health` | Public | Health check + uptime |
 | `GET /api/meta` | Public | `{ devMode, frontendUrl }` |
+| `POST /api/contact` | Public | Contact form → Discord webhook (server-side) |
 | `POST /api/dev/login` | Public (DEV_MODE only) | Create dev session; body: `{ name, email, role }` |
 
 ---
@@ -176,6 +204,12 @@ SQLite via `better-sqlite3`. File: `server/db/organizer.db` (not committed). WAL
 
 ## Local development
 
+### Content compilation (do this first)
+
+```bash
+node scripts/compile-all.js
+```
+
 ### Frontend
 
 ```bash
@@ -188,7 +222,7 @@ cd client && npm install && npm run dev
 ```bash
 cd server && npm install
 cp .env.example .env   # fill SESSION_SECRET, set DEV_MODE=true
-node server.js         # or npm run dev
+node server.js
 ```
 
 Set `FRONTEND_URL_DEV=http://localhost:3000` for CORS in dev.
@@ -198,22 +232,6 @@ Set `FRONTEND_URL_DEV=http://localhost:3000` for CORS in dev.
 OAuth redirects go to the production domain — they won't work on localhost.
 
 **Workflow:** `DEV_MODE=true` → go to `#/login` → click **Dev Login** → admin session created via `POST /api/dev/login` → lands on `#/organizer`.
-
-### Stats API
-
-```bash
-python stats/stats.py
-```
-
-Reads `/proc/*` and systemd — partial/empty values on non-Linux.
-
----
-
-## Stats payload contract
-
-`GET /api/stats` → `uptime`, `cpu_temp`, `cpu_load`, `cpu_usage`, `memory`, `storage`, `network`, `services`, `fail2ban`, `logs`
-
-Update both `stats/stats.py` and `client/src/pages/status.js` together if fields change.
 
 ---
 
@@ -235,7 +253,6 @@ Uses `rsync`, restarts `anni-website` systemd service.
 
 ```bash
 journalctl -u anni-website -n 50 --no-pager
-journalctl -u anni-stats   -n 50 --no-pager
 ```
 
 ---
@@ -246,8 +263,7 @@ journalctl -u anni-stats   -n 50 --no-pager
 
 - Static root: `/opt/anni/www`
 - Logs: `/var/log/nginx/anni-{access,error}.log`
-- `/api/stats` (explicit, higher priority) → Python :5000
-- `/api/` (catch-all) → Node :4000
+- `/api/` → Node :4000
 - Sets `X-Forwarded-Proto $http_x_forwarded_proto` so cookies keep the `Secure` flag behind Cloudflare
 
 Rules:
@@ -260,6 +276,7 @@ Rules:
 
 - Never commit `server/.env` (OAuth secrets + session key)
 - Never commit `server/db/*.db` (user data — covered by `.gitignore`)
+- Never commit `client/src/data/` (compiled content — covered by `.gitignore`)
 - Preserve `httpOnly`, `secure`, `sameSite` on session cookie
 - Deploy scripts must preserve `.env` and `.db` files on Pi
 
@@ -271,6 +288,7 @@ Rules:
 - `systemctl is-active` output has a trailing newline — always `.Trim()` before comparing
 - Money in `finance_entries` is **cents** — never store or display as floats
 - `tokens_reset_at` is Unix epoch (seconds) — compare with `Math.floor(Date.now() / 1000)`
+- Content pages import from `../data/*.json` — if the data files are missing, run `node scripts/compile-all.js`
 
 ---
 
@@ -305,6 +323,9 @@ Rules:
 | User API route | `server/routes/user.js` |
 | DB init | `server/db/db.js` |
 | Full schema | `server/db/schema.sql` |
-| Stats API | `stats/stats.py` |
 | Nginx config | `nginx/yumehana.dev.nginx` |
 | Deploy | `deploy.ps1`, `deploy.sh` |
+| Project content | `content/projects.json` |
+| About content | `content/about.json` |
+| Devlog content | `content/devlogs/` |
+| Content compilers | `scripts/` |

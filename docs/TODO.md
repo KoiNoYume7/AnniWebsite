@@ -11,9 +11,12 @@
 - **Database**: SQLite via `better-sqlite3`, WAL mode, FK constraints. Six tables: `users`, `todos`, `events`, `reminders`, `finance_entries`, `ai_usage`.
 - **Auth**: Open registration. Any GitHub/Discord/Google account gets a `free` role on first login. Env-var whitelists promote specific accounts to `admin` automatically.
 - **Session store**: `connect-sqlite3` — sessions survive Node restarts.
-- **nginx**: All `/api/*` proxied to Node (stats `/api/stats` still hits Python on :5000 first).
+- **nginx**: All `/api/*` proxied to Node :4000.
 - **Frontend**: `#/organizer` route live, auth-gated, shows sidebar + tabs + user profile with token bar.
+- **Content system**: All page content (projects, about, devlogs) is data-driven — edit `content/`, run compilers in `scripts/`, frontend reads from `client/src/data/`.
 - **Dev mode**: `DEV_MODE=true` exposes `POST /api/dev/login` and shows a dev login button on the login page — no OAuth needed locally.
+
+**Removed**: Pi dashboard (`#/status`), Python stats API (`stats/`), nginx `/api/stats` proxy — didn't fit the site direction.
 
 Next up: **Phase 2** — feature modules (todos, calendar, reminders, finance).
 
@@ -109,7 +112,7 @@ CREATE TABLE IF NOT EXISTS ai_usage (
 - [x] **0.3** Switch session store from in-memory to `connect-sqlite3` (`sessions.db`)
 - [x] **0.4** Open-auth flow — upsert user on every successful OAuth login, whitelist → admin promotion
 - [x] **0.5** Auth middleware — `requireAuth`, `requireSubscriber`
-- [x] **0.6** nginx — generalized `/api/*` proxy (keep `/api/stats` explicit for Python)
+- [x] **0.6** nginx — generalized `/api/*` proxy
 - [x] **0.7** Post-login redirect → `/#/organizer`
 - [x] **0.8** `GET /api/user/me` endpoint — returns full DB user record
 - [x] **0.9** `GET /api/meta` endpoint — returns `devMode` flag + `frontendUrl`
@@ -120,7 +123,7 @@ CREATE TABLE IF NOT EXISTS ai_usage (
 ## Phase 1: Organizer Dashboard Shell ✅ COMPLETE
 
 - [x] **1.1** New frontend route `#/organizer` — auth-gated, sidebar + tab layout
-- [x] **1.2** `#/status` kept as admin-only Pi stats page
+- [x] **1.2** ~~`#/status` admin-only Pi stats page~~ (removed — didn't fit direction)
 - [x] **1.3** User profile header — avatar, name, tier badge, token usage bar with reset date
 - [x] **1.4** Tab system — Todos, Calendar, Reminders, Finance, AI Chat (placeholder content)
 - [x] **1.5** Organizer CSS — full responsive layout (920px collapse, 600px mobile)
@@ -208,7 +211,7 @@ Build each tool as a pair of backend CRUD routes + frontend render function.
 - [ ] Web push notifications: VAPID keys, service worker, push subscriptions in DB
 - [ ] Admin panel (`#/admin`): user list, subscription status, usage, manual role management
 - [ ] `express-rate-limit` on AI endpoint — 60 req/hr per IP as backstop
-- [ ] **Decide the fate of `#/status`** — the Pi stats dashboard no longer fits the direction the site is taking. Options: rework it into something that belongs on a personal/organizer site (e.g. a tiny "server pulse" widget on the home page instead of a whole admin view), or scrap the page and the whole `stats/` Python service. See `docs/IDEAS.md` for the longer write-up. Blocks further investment in `stats.py`.
+- [x] ~~Decide the fate of `#/status`~~ — **Deleted.** See `docs/IDEAS.md` for the resolved decision.
 
 ---
 

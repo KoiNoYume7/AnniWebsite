@@ -13,27 +13,24 @@ external storage drive:
 ```
 /opt/anni/                   # SD card — always available
 ├── www/                     # Built frontend (Vite output)
-├── server/                  # Node/Express backend
-│   ├── server.js
-│   ├── routes/
-│   ├── db/
-│   │   ├── db.js
-│   │   ├── schema.sql
-│   │   ├── sessions.db      # session store (local to SD)
-│   │   └── organizer.db ──► symlink to storage drive
-│   └── .env
-└── stats/                   # Python stats API
-    └── stats.py
+└── server/                  # Node/Express backend
+    ├── server.js
+    ├── routes/
+    ├── db/
+    │   ├── db.js
+    │   ├── schema.sql
+    │   ├── sessions.db      # session store (local to SD)
+    │   └── organizer.db ──► symlink to storage drive
+    └── .env
 
 /srv/storage/AnniWebsite/    # External USB drive (hot-pluggable)
 └── server/db/organizer.db   # real file lives here
 ```
 
-The backend listens on `127.0.0.1:4000`, the stats API on
-`127.0.0.1:5000`, and nginx proxies `yumehana.dev` to both.
-Only user data (`organizer.db`) lives on the storage drive — so
-unplugging the drive degrades the organizer but keeps the rest of
-the site up.
+The backend listens on `127.0.0.1:4000` and nginx proxies
+`yumehana.dev/api/*` to it. Only user data (`organizer.db`) lives
+on the storage drive — so unplugging the drive degrades the
+organizer but keeps the rest of the site up.
 
 ---
 
@@ -93,7 +90,7 @@ Find your Discord user ID:
 On the Pi:
 
 ```bash
-sudo mkdir -p /opt/anni/www /opt/anni/server/db /opt/anni/stats
+sudo mkdir -p /opt/anni/www /opt/anni/server/db
 sudo chown -R akira:akira /opt/anni
 
 # Storage drive — where the organizer DB lives
@@ -149,13 +146,11 @@ SD-card copy, which is what you want.
 
 ```bash
 sudo cp /opt/anni/server/anni-website.service /etc/systemd/system/
-sudo cp /opt/anni/stats/anni-stats.service    /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable --now anni-website anni-stats
+sudo systemctl enable --now anni-website
 
-# Check both
+# Check
 sudo systemctl status anni-website
-sudo systemctl status anni-stats
 sudo journalctl -u anni-website -f
 ```
 
@@ -188,7 +183,7 @@ config. Without this, you need to `sudo systemctl start srv-storage.mount`
 after plugging the drive back in.
 
 When the drive is unmounted, the organizer tab goes into "under
-maintenance" mode but login, home, blog, projects, and stats all keep
+maintenance" mode but login, home, blog, projects, and contact all keep
 working.
 
 ---
@@ -210,6 +205,5 @@ sudo tail -f /var/log/nginx/anni-error.log # nginx errors
 
 ## UFW — no extra ports needed
 
-The backend and stats API both bind loopback only (`127.0.0.1:4000`,
-`127.0.0.1:5000`), so no firewall rules are required. nginx proxies
-`/api/*` internally.
+The backend binds loopback only (`127.0.0.1:4000`), so no firewall
+rules are required for it. nginx proxies `/api/*` internally.

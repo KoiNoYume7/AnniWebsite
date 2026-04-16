@@ -6,7 +6,6 @@ import { renderBlog }      from '../pages/blog.js'
 import { renderContact }   from '../pages/contact.js'
 import { renderAbout }     from '../pages/about.js'
 import { renderLogin }     from '../pages/login.js'
-import { renderStatus }    from '../pages/status.js'
 import { renderOrganizer } from '../organizer/index.js'
 
 export const routes = {
@@ -17,7 +16,6 @@ export const routes = {
   'contact':   renderContact,
   'about':     renderAbout,
   'login':     renderLogin,
-  'status':    renderStatus,
   'organizer': renderOrganizer,
 }
 

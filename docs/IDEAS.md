@@ -60,33 +60,12 @@ Discord-style presence widget showing what KoiNoYume7 is listening to right now,
 
 ---
 
-## Rework or scrap `#/status` (Pi stats dashboard)
+## Resolved ideas
 
-The admin-only `#/status` page + Python `stats/stats.py` service made
-sense back when this was "a personal site on a Pi" and the Pi itself
-was the interesting thing. Now the site is pivoting toward the
-Organizer being the actual product — a self-hosted life OS — and the
-stats dashboard doesn't fit that story anymore. It's a maintenance
-burden (its own systemd service, nginx block, log path, service list)
-for a view only one person ever looks at.
+### ~~Rework or scrap `#/status` (Pi stats dashboard)~~
 
-### Option A — scrap it
+**Decision: Deleted.** The Pi dashboard (`#/status`), Python stats API (`stats/`), and nginx `/api/stats` proxy block have been removed. The full status page was maintenance overhead for something nobody but the admin sees. If server health monitoring is needed, use a proper tool (Uptime Kuma, Grafana, etc.) instead of building it into the website.
 
-- Delete `client/src/pages/status.js` and remove the `#/status` route
-- Delete `stats/` entirely and the `anni-stats.service` unit on the Pi
-- Drop the `/api/stats` block from `nginx/yumehana.dev.nginx`
-- Anything I actually care about (CPU temp, uptime) I can check over SSH
+### ~~Discord server invite~~
 
-### Option B — rework it into a "pulse" widget
-
-- Keep only the interesting subset: uptime, CPU temp, maybe RAM
-- Move it into a small widget on `#/` (home) — public, read-only, no auth
-- Still served by `/api/stats` but with a slimmed-down payload
-- Drop `#/status` page, service list, log tail, fail2ban — all unused
-- Keeps the "it's self-hosted on a Pi" flavour without the cost of a full dashboard
-
-### Priority
-
-**Medium** — not blocking Phase 2/3 work, but every time the stats
-payload shape needs to change or a log path moves it's friction for
-nothing. Decide the fate before Phase 5 polish.
+**Decision: Disabled.** The Discord CTA on the home page is preserved but greyed out with `opacity:0.55; pointer-events:none`. It shows "Coming Soon" instead of a join link. Re-enable it by removing those styles in `home.js` and updating the invite URL when the server is ready.
