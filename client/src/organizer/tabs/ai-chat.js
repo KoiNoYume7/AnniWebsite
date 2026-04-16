@@ -17,7 +17,7 @@ export function render(user) {
         ${hasAccess
           ? '<p>AI chat unlocks automatically once the Phase 3 endpoints land.</p>'
           : '<p>Upgrade from Free → Basic to unlock Claude once billing goes live in Phase 4.</p>'}
-        <button class="btn btn-primary" onclick="navigate('contact')">Follow development →</button>
+        <button class="btn btn-primary" onclick="navigate('blog')">Read devlog →</button>
       </div>
     </div>`
 }

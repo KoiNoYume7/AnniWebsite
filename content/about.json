@@ -8,21 +8,21 @@
   ],
   "facts": [
     { "icon": "🇨🇭", "label": "Based in Switzerland" },
+    { "icon": "🚗", "label": "2015 Seat leon fr the goat" },
     { "icon": "🔐", "label": "Cybersecurity trainee" },
     { "icon": "🍀", "label": "Monster & Red Bull daily" },
     { "icon": "🌙", "label": "Best commits after midnight" },
     { "icon": "🚀", "label": "Star Citizen main" },
-    { "icon": "🎌", "label": "Anime & car enthusiast" },
     { "icon": "🎵", "label": "Good bass is non-negotiable" },
     { "icon": "🖥️", "label": "Self-hosts everything" }
   ],
   "skills": [
-    { "name": "Python",      "pct": 75 },
-    { "name": "JavaScript",  "pct": 70 },
+    { "name": "PowerShell",  "pct": 87 },
+    { "name": "JavaScript",  "pct": 80 },
     { "name": "HTML / CSS",  "pct": 85 },
-    { "name": "PowerShell",  "pct": 60 },
-    { "name": "C",           "pct": 45 },
-    { "name": "Bash / CLI",  "pct": 80 }
+    { "name": "Python",      "pct": 75 },
+    { "name": "C / C#",      "pct": 55 },
+    { "name": "Bash / CLI",  "pct": 62 }
   ],
   "infrastructure": [
     "Linux", "Nginx", "Tailscale", "Cloudflared", "Samba", "Fail2ban", "UFW", "Docker (learning)"

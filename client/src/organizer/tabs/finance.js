@@ -12,8 +12,8 @@ export function render(_user) {
         <li>Claude insights: "Where did I overspend this month?"</li>
       </ul>
       <div class="organizer-placeholder-cta">
-        <p>Feature coming in Phase 2 — follow development progress or drop a message.</p>
-        <button class="btn btn-primary" onclick="navigate('contact')">Follow development →</button>
+        <p>Feature coming in Phase 2 — follow the devlog for progress updates.</p>
+        <button class="btn btn-primary" onclick="navigate('blog')">Read devlog →</button>
       </div>
     </div>`
 }

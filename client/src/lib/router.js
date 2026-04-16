@@ -51,7 +51,7 @@ export async function navigate(to) {
   const subpath = parts.slice(1).join('/')           // e.g. 'rpi4-setup-2026' for blog/slug
 
   const target = subpath ? `#/${hash}/${subpath}` : `#/${hash}`
-  if (location.hash !== target) history.replaceState(null, '', target)
+  if (location.hash !== target) history.pushState(null, '', target)
 
   const render = routes[hash] || renderHome
   const root   = document.getElementById('page-root')

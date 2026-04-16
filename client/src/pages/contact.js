@@ -45,7 +45,7 @@ export async function renderContact(root) {
                 🐙 GitHub
               </h3>
               <p style="color:var(--muted);font-size:0.88rem;line-height:1.7;margin-bottom:16px">
-                Open issues, PRs, or just star the repos if you like what you see.
+                Check out my projects, or reach out there if the form isn't working.
               </p>
               <a href="https://github.com/KoiNoYume7" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center">
                 GitHub ↗

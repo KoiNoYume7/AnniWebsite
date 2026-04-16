@@ -5,7 +5,7 @@
     "description": "Personal website + AI life organizer. Built with Vite, vanilla JS, self-hosted. Designed from scratch, no templates.",
     "tags": ["vite", "frontend", "self-hosted", "vanilla-js"],
     "phase": "Phase 2",
-    "status": "wip",
+    "status": "active",
     "featured": true,
     "sort_order": 1,
     "url_override": null
@@ -16,6 +16,17 @@
     "description": "A self-hosted proxy browser backend. Routes and manages web traffic privately — built for people who take their own infrastructure seriously.",
     "tags": ["self-hosted", "privacy", "proxy", "backend"],
     "phase": "Early WIP",
+    "status": "paused",
+    "featured": false,
+    "sort_order": 3,
+    "url_override": null
+  },
+  {
+    "name": "AnniWIn11",
+    "icon": "🪟",
+    "description": "Windows 11 backup & restore tool. Makes re-installing windows way more bearable.",
+    "tags": ["windows", "backup", "restore"],
+    "phase": "Version 0.6.0",
     "status": "wip",
     "featured": true,
     "sort_order": 2,

@@ -1,8 +1,14 @@
 import projectsData from '../data/projects.json'
 
 export async function renderProjects(root) {
-  const featured = projectsData.filter(p => p.featured)
-  const rest     = projectsData.filter(p => !p.featured)
+  // Featured first, then the rest — all visible
+  const sorted = [
+    ...projectsData.filter(p => p.featured),
+    ...projectsData.filter(p => !p.featured),
+  ]
+  const showExpand = sorted.length > 10
+  const visible    = showExpand ? sorted.slice(0, 10) : sorted
+  const hidden     = showExpand ? sorted.slice(10) : []
 
   root.innerHTML = `
     <section class="section">
@@ -14,37 +20,48 @@ export async function renderProjects(root) {
         </p>
 
         <div id="projects-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px">
-          ${featured.map((p, i) => projectCard(p, i)).join('')}
+          ${visible.map((p, i) => projectCard(p, i)).join('')}
         </div>
 
-        ${rest.length ? `
+        ${hidden.length ? `
           <div id="projects-more-wrap" style="display:none">
-            <h2 class="reveal" style="font-family:var(--font-head);font-size:1.2rem;font-weight:700;margin:48px 0 20px;color:var(--muted)">
-              All projects
-            </h2>
-            <div id="projects-more-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px">
-              ${rest.map((p, i) => projectCard(p, i + featured.length)).join('')}
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px;margin-top:24px">
+              ${hidden.map((p, i) => projectCard(p, i + visible.length)).join('')}
             </div>
           </div>
           <div class="reveal" style="margin-top:36px;text-align:center" id="projects-toggle-wrap">
-            <button class="btn btn-ghost" id="projects-toggle-btn">Show all projects (${projectsData.length})</button>
+            <button class="btn btn-ghost" id="projects-toggle-btn">Show all (${sorted.length})</button>
           </div>
         ` : ''}
       </div>
     </section>
   `
 
-  // Toggle show all
+  // Inject featured glow styles
+  if (!document.getElementById('projects-featured-style')) {
+    const style = document.createElement('style')
+    style.id = 'projects-featured-style'
+    style.textContent = `
+      .project-card.featured-card {
+        border-color: rgba(99, 210, 190, 0.25);
+        box-shadow: 0 0 20px rgba(99, 210, 190, 0.08), 0 0 40px rgba(99, 210, 190, 0.04);
+      }
+      .project-card.featured-card:hover {
+        border-color: rgba(99, 210, 190, 0.4);
+        box-shadow: 0 0 28px rgba(99, 210, 190, 0.14), 0 0 56px rgba(99, 210, 190, 0.06);
+      }
+    `
+    document.head.appendChild(style)
+  }
+
+  // Expand toggle (only if >10 projects)
   const toggleBtn = document.getElementById('projects-toggle-btn')
   const moreWrap  = document.getElementById('projects-more-wrap')
   if (toggleBtn && moreWrap) {
     toggleBtn.addEventListener('click', () => {
       const showing = moreWrap.style.display !== 'none'
       moreWrap.style.display = showing ? 'none' : 'block'
-      toggleBtn.textContent = showing
-        ? `Show all projects (${projectsData.length})`
-        : 'Show featured only'
-      // Trigger reveal on newly visible cards
+      toggleBtn.textContent = showing ? `Show all (${sorted.length})` : 'Show less'
       if (!showing) {
         moreWrap.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'))
       }
@@ -62,12 +79,17 @@ export async function renderProjects(root) {
 }
 
 function projectCard(p, i) {
-  const statusBadge = p.status === 'wip'    ? '<span class="badge-wip">WIP</span>'
-                    : p.status === 'stable'  ? '<span class="badge-up">Stable</span>'
+  const statusBadge = p.status === 'wip'     ? '<span class="badge-wip">WIP</span>'
+                    : p.status === 'active'   ? '<span class="badge-up">Active</span>'
+                    : p.status === 'stable'   ? '<span class="badge-up">Stable</span>'
+                    : p.status === 'paused'   ? '<span class="badge-wip" style="background:rgba(250,204,21,0.12);color:var(--yellow)">Paused</span>'
                     : ''
-  const updated = new Date(p.updated_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+  const featuredClass = p.featured ? ' featured-card' : ''
+  const updated = p.updated_at
+    ? new Date(p.updated_at).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+    : null
   return `
-    <a class="project-card reveal" href="${p.url}" target="_blank" rel="noopener"
+    <a class="project-card${featuredClass} reveal" href="${p.url}" target="_blank" rel="noopener"
        style="animation-delay:${i * 0.06}s">
       <div class="pc-top">
         <div class="pc-icon">${p.icon}</div>
@@ -84,7 +106,7 @@ function projectCard(p, i) {
         <div class="pc-stats">
           <span class="pc-stat">⭐ ${p.stars}</span>
           <span class="pc-stat">🍴 ${p.forks}</span>
-          <span class="pc-stat" style="font-size:0.7rem">Updated ${updated}</span>
+          ${updated ? `<span class="pc-stat" style="font-size:0.7rem">Updated ${updated}</span>` : ''}
         </div>
         <span class="pc-link">View ↗</span>
       </div>

@@ -113,7 +113,7 @@ export async function renderHome(root) {
             <a class="project-card reveal" href="${p.url}" target="_blank" rel="noopener">
               <div class="pc-top">
                 <div class="pc-icon">${p.icon}</div>
-                ${p.status === 'wip' ? '<span class="badge-wip">WIP</span>' : p.status === 'stable' ? '<span class="badge-up">Stable</span>' : ''}
+                ${p.status === 'wip' ? '<span class="badge-wip">WIP</span>' : p.status === 'active' ? '<span class="badge-up">Active</span>' : p.status === 'stable' ? '<span class="badge-up">Stable</span>' : ''}
               </div>
               <div class="pc-title">${p.name}</div>
               ${p.phase ? `<div style="font-size:0.72rem;color:var(--accent);font-weight:600;letter-spacing:0.05em">${p.phase}</div>` : ''}
