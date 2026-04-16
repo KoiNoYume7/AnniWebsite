@@ -9,6 +9,7 @@ import fs from 'fs'
 
 import db from './db/db.js'
 import { registerUserRoutes } from './routes/user.js'
+import { registerSpotifyRoutes } from './routes/spotify.js'
 
 const app  = express()
 const PORT = process.env.PORT || 4000
@@ -245,6 +246,9 @@ app.get('/api/auth/me', (req, res) => {
 
 // ── User routes (extracted to server/routes/user.js) ──
 registerUserRoutes(app, { requireAuth })
+
+// ── Spotify integration (extracted to server/routes/spotify.js) ──
+registerSpotifyRoutes(app, { FRONTEND, requireAuth })
 
 // GET /api/auth/logout — MUST be before :provider so it doesn't match as a provider name
 app.get('/api/auth/logout', (req, res) => {
