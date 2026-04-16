@@ -261,7 +261,7 @@ def get_fail2ban():
 def get_recent_logs():
     logs = []
     # nginx access log — last 5 lines
-    out = run("tail -5 /srv/backup/AnniWebsite/logs/nginx/access.log 2>/dev/null")
+    out = run("tail -5 /var/log/nginx/anni-access.log 2>/dev/null")
     for line in out.splitlines():
         if line.strip():
             logs.append({"source": "nginx", "message": line.strip()})

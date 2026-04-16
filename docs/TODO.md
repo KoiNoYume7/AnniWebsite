@@ -1,6 +1,6 @@
 # AnniWebsite — Organizer Development Roadmap
 
-*Last updated: March 2026*
+*Last updated: April 2026*
 
 ---
 
@@ -208,6 +208,7 @@ Build each tool as a pair of backend CRUD routes + frontend render function.
 - [ ] Web push notifications: VAPID keys, service worker, push subscriptions in DB
 - [ ] Admin panel (`#/admin`): user list, subscription status, usage, manual role management
 - [ ] `express-rate-limit` on AI endpoint — 60 req/hr per IP as backstop
+- [ ] **Decide the fate of `#/status`** — the Pi stats dashboard no longer fits the direction the site is taking. Options: rework it into something that belongs on a personal/organizer site (e.g. a tiny "server pulse" widget on the home page instead of a whole admin view), or scrap the page and the whole `stats/` Python service. See `docs/IDEAS.md` for the longer write-up. Blocks further investment in `stats.py`.
 
 ---
 

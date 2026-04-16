@@ -57,3 +57,36 @@ Discord-style presence widget showing what KoiNoYume7 is listening to right now,
 - **Public roadmap page** (`#/roadmap`) — rendered from `docs/TODO.md` so it stays in sync with actual dev state automatically
 - **Dark/light mode per-page memory** — remember which page you were on and scroll position across theme changes
 - **Organizer public share links** — share a read-only view of your todo list or finance summary with a signed token (Phase 5+)
+
+---
+
+## Rework or scrap `#/status` (Pi stats dashboard)
+
+The admin-only `#/status` page + Python `stats/stats.py` service made
+sense back when this was "a personal site on a Pi" and the Pi itself
+was the interesting thing. Now the site is pivoting toward the
+Organizer being the actual product — a self-hosted life OS — and the
+stats dashboard doesn't fit that story anymore. It's a maintenance
+burden (its own systemd service, nginx block, log path, service list)
+for a view only one person ever looks at.
+
+### Option A — scrap it
+
+- Delete `client/src/pages/status.js` and remove the `#/status` route
+- Delete `stats/` entirely and the `anni-stats.service` unit on the Pi
+- Drop the `/api/stats` block from `nginx/yumehana.dev.nginx`
+- Anything I actually care about (CPU temp, uptime) I can check over SSH
+
+### Option B — rework it into a "pulse" widget
+
+- Keep only the interesting subset: uptime, CPU temp, maybe RAM
+- Move it into a small widget on `#/` (home) — public, read-only, no auth
+- Still served by `/api/stats` but with a slimmed-down payload
+- Drop `#/status` page, service list, log tail, fail2ban — all unused
+- Keeps the "it's self-hosted on a Pi" flavour without the cost of a full dashboard
+
+### Priority
+
+**Medium** — not blocking Phase 2/3 work, but every time the stats
+payload shape needs to change or a log path moves it's friction for
+nothing. Decide the fate before Phase 5 polish.

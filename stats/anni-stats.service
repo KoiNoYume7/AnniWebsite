@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=akira
-WorkingDirectory=/srv/storage/AnniWebsite/stats
+WorkingDirectory=/opt/anni/stats
 ExecStart=/usr/bin/python3 stats.py
 Restart=on-failure
 RestartSec=5

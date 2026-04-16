@@ -3,6 +3,16 @@
 #  Run from repo root: .\deploy.ps1
 #  Builds the frontend, copies everything to the Pi,
 #  and restarts the backend service automatically.
+#
+#  Pi layout (SD card — always available):
+#    /opt/anni/www      → built frontend
+#    /opt/anni/server   → Node/Express backend + sessions.db
+#    /opt/anni/stats    → Python stats API
+#
+#  The organizer DB lives on the storage drive at
+#  /srv/storage/AnniWebsite/server/db/organizer.db and is
+#  symlinked into /opt/anni/server/db/organizer.db. Deploy
+#  scripts never touch that file.
 # ─────────────────────────────────────────────────────────
 
 param(
@@ -15,9 +25,9 @@ param(
 # ── Config ──
 $PI_USER   = "akira"
 $PI_HOST   = "yme-04"
-$PI_WEB    = "/srv/storage/AnniWebsite"
-$PI_SERVER = "/srv/storage/AnniWebsite/server"
-$PI_STATS  = "/srv/storage/AnniWebsite/stats"
+$PI_WEB    = "/opt/anni/www"
+$PI_SERVER = "/opt/anni/server"
+$PI_STATS  = "/opt/anni/stats"
 
 # ── Colours ──
 function Log   { param($m) Write-Host "> $m" -ForegroundColor Cyan }
@@ -98,7 +108,7 @@ if ($DeployClient -and -not $SkipBuild) {
 # ── Deploy frontend ──
 if ($DeployClient) {
     Log "Deploying frontend to ${PI_HOST}:${PI_WEB}..."
-    # Use scp since rsync isn't native on Windows
+    # Clear old built artifacts before pushing fresh ones (no user data here)
     Invoke-SSH "rm -rf ${PI_WEB}/assets ${PI_WEB}/index.html ${PI_WEB}/favicon.svg"
     Invoke-SCP "client/dist/*" $PI_WEB
     if ($LASTEXITCODE -ne 0) { Fail "Frontend deploy failed" }
@@ -108,15 +118,19 @@ if ($DeployClient) {
 # ── Deploy backend ──
 if ($DeployServer) {
     Log "Deploying backend to ${PI_HOST}:${PI_SERVER}..."
-    # Copy server files, skip node_modules and .env
+    # Copy server files, skip node_modules, .env, and db/ (preserves organizer.db symlink + sessions.db)
     $serverFiles = Get-ChildItem server | Where-Object {
-        $_.Name -notin @('node_modules', '.env')
+        $_.Name -notin @('node_modules', '.env', 'db')
     }
     foreach ($f in $serverFiles) {
         Invoke-SCP $f.FullName $PI_SERVER
     }
     if ($LASTEXITCODE -ne 0) { Fail "Backend deploy failed" }
-    Ok "Backend files synced (.env preserved)"
+
+    # Sync only schema.sql + db.js from db/ — never touch the .db files on the Pi
+    Invoke-SCP "server\db\db.js" "${PI_SERVER}/db/"
+    Invoke-SCP "server\db\schema.sql" "${PI_SERVER}/db/"
+    Ok "Backend files synced (.env, organizer.db, sessions.db preserved)"
 
     Log "Installing backend dependencies on Pi..."
     Invoke-SSH "cd ${PI_SERVER} && npm install --omit=dev 2>&1 | tail -3"

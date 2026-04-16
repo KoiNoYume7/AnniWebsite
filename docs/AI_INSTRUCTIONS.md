@@ -12,11 +12,11 @@ AnniWebsite is a self-hosted personal website + AI life organizer for KoiNoYume7
 - Backend: Node.js + Express with OAuth + SQLite
 - Stats API: Python `http.server` JSON API for the status dashboard
 - Reverse proxy: nginx on Raspberry Pi 4
-- Hosting: `/srv/storage` (web files), `/srv/backup` (backups)
+- Hosting: code + static under `/opt/anni/{www,server,stats}` on the SD card; `organizer.db` on the `/srv/storage` external drive (hot-pluggable). `/srv/backup` is a separate backup drive and is not required for the site to run.
 
 Primary domain: `https://yumehana.dev`
 
-## Development state (March 2026)
+## Development state (April 2026)
 
 Phase 0 (foundation) and Phase 1 (organizer shell) are complete. Phase 2 (feature modules) is next.
 The organizer is the main product — it's a real feature with a live SQLite DB and full auth.
@@ -114,15 +114,23 @@ docs/
 
 ```
 Browser → Cloudflare Tunnel (HTTPS) → nginx :80
-  ├── /             → /srv/storage/AnniWebsite/ (static files)
+  ├── /             → /opt/anni/www/ (static files, SD card)
   ├── /api/stats    → 127.0.0.1:5000 (Python — explicit block, higher priority)
-  └── /api/*        → 127.0.0.1:4000 (Node/Express)
+  └── /api/*        → 127.0.0.1:4000 (Node/Express, /opt/anni/server)
 ```
+
+Pi directory layout:
+- `/opt/anni/www` — built Vite output (always available)
+- `/opt/anni/server` — Node/Express backend + `sessions.db`
+- `/opt/anni/stats` — Python stats API
+- `/opt/anni/server/db/organizer.db` → **symlink** into `/srv/storage/AnniWebsite/server/db/organizer.db` (the only user data on the hot-pluggable drive)
 
 Invariants:
 - Backend binds loopback only: `127.0.0.1:4000`
 - Stats binds loopback only: `127.0.0.1:5000`
+- `X-Forwarded-Proto` comes from Cloudflare's header (`$http_x_forwarded_proto`), not `$scheme` — nginx is on plain `:80` so `$scheme` is always "http"
 - `/api/stripe/webhook` (Phase 4) needs `proxy_request_buffering off` in nginx
+- When `/srv/storage` is unplugged the backend must degrade gracefully: the organizer goes into "under maintenance" mode, but login/home/blog/projects/stats keep serving
 
 ---
 
@@ -236,9 +244,11 @@ journalctl -u anni-stats   -n 50 --no-pager
 
 `nginx/yumehana.dev.nginx`:
 
-- Static root: `/srv/storage/AnniWebsite`
+- Static root: `/opt/anni/www`
+- Logs: `/var/log/nginx/anni-{access,error}.log`
 - `/api/stats` (explicit, higher priority) → Python :5000
 - `/api/` (catch-all) → Node :4000
+- Sets `X-Forwarded-Proto $http_x_forwarded_proto` so cookies keep the `Secure` flag behind Cloudflare
 
 Rules:
 - Always `nginx -t` before reload
@@ -267,7 +277,8 @@ Rules:
 ## Ask before changing
 
 - OAuth provider settings / callback URLs
-- Any path under `/srv/storage` or `/srv/backup`
+- The `/opt/anni/server/db/organizer.db` ↔ `/srv/storage/...` symlink
+- Any path under `/opt/anni/`, `/srv/storage`, or `/srv/backup`
 - systemd unit `User`, `WorkingDirectory`, or filesystem permissions
 - Stripe webhook handling (raw body requirement is critical)
 

@@ -6,6 +6,12 @@
 #    sudo systemctl enable anni-website
 #    sudo systemctl start anni-website
 #    sudo systemctl status anni-website
+#
+#  The service runs from /opt/anni/server on the SD card so
+#  the backend process itself is always available. The
+#  organizer.db inside db/ is a symlink to the storage drive;
+#  if that drive is unplugged the backend handles the missing
+#  DB gracefully (see server.js degraded-mode handling).
 # ──────────────────────────────────────────────────────────
 
 [Unit]
@@ -15,14 +21,14 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=services
-WorkingDirectory=/home/services/AnniWebsite/server
+User=akira
+WorkingDirectory=/opt/anni/server
 ExecStart=/usr/bin/node server.js
 Restart=on-failure
 RestartSec=5
 
 # Load secrets from .env file
-EnvironmentFile=/home/services/AnniWebsite/server/.env
+EnvironmentFile=/opt/anni/server/.env
 
 # Logging
 StandardOutput=journal
@@ -33,7 +39,9 @@ SyslogIdentifier=anni-website
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
-ReadWritePaths=/home/services/AnniWebsite/server
+# Needs write access to the local db/ dir (sessions.db + the organizer.db symlink target)
+# and transitively to /srv/storage where the organizer.db actually lives.
+ReadWritePaths=/opt/anni/server /srv/storage
 
 [Install]
 WantedBy=multi-user.target

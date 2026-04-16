@@ -16,7 +16,8 @@ Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
 | Reverse proxy | nginx |
 | Tunnel | Cloudflare Tunnel (no open inbound ports) |
 | Server | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit |
-| Storage | NTFS external drives at `/srv/storage` + `/srv/backup` |
+| Code + static | SD card at `/opt/anni/{www,server,stats}` (always available) |
+| User data | `organizer.db` on NTFS external drive at `/srv/storage` (hot-pluggable) |
 | VPN | Tailscale (SSH + Samba access only) |
 
 ---
@@ -182,8 +183,10 @@ OAuth callback URLs point to the production domain. On localhost, use dev login 
 ./deploy.ps1   # Windows — ssh/scp
 ```
 
-Deploy scripts preserve `server/.env` and `server/db/*.db` on the Pi.
-See `server/SETUP.md` for full OAuth + nginx setup.
+Deploy scripts push code to `/opt/anni/` and preserve `server/.env`
+and `server/db/*.db` (both the local `sessions.db` and the symlinked
+`organizer.db`). See `server/SETUP.md` for full OAuth + nginx +
+directory-layout setup.
 
 ---
 
@@ -193,12 +196,19 @@ See `server/SETUP.md` for full OAuth + nginx setup.
 Browser
   └── Cloudflare Tunnel (HTTPS)
         └── nginx :80
-              ├── /             → /srv/storage/AnniWebsite/ (static)
+              ├── /             → /opt/anni/www/ (static, SD card)
               ├── /api/stats    → 127.0.0.1:5000 (Python stats)
-              └── /api/*        → 127.0.0.1:4000 (Express)
-                                      └── organizer.db (SQLite)
+              └── /api/*        → 127.0.0.1:4000 (Express, /opt/anni/server)
+                                      └── db/organizer.db ──► /srv/storage/…
 ```
 
+- Code lives on the SD card under `/opt/anni/{www,server,stats}` so
+  the site stays up even if the external storage drive is unplugged.
+- The organizer database (`organizer.db`) is the only user data that
+  lives on `/srv/storage` — symlinked into `server/db/` so `db.js`
+  opens it transparently. When the drive is missing the backend
+  serves a degraded organizer ("under maintenance") while login, home,
+  blog, and projects keep working.
 - Backend binds loopback only (`127.0.0.1:4000`) — never directly exposed
 - SSH + Samba via Tailscale only; UFW blocks all other inbound
 
