@@ -174,6 +174,13 @@ Invariants:
 | `GET /api/meta` | Public | `{ devMode, frontendUrl }` |
 | `POST /api/contact` | Public | Contact form → Discord webhook (server-side) |
 | `POST /api/dev/login` | Public (DEV_MODE only) | Create dev session; body: `{ name, email, role }` |
+| `GET /api/spotify/now-playing` | Public | Current track or `{ playing: false }` |
+| `GET /api/spotify/stream` | Public | SSE — pushes `now-playing` state on every change (~10s poll interval server-side) |
+| `GET /api/spotify/recent-tracks` | Public | Recently played tracks (cached 3 min; `?limit=N`, max 50) |
+| `GET /api/spotify/top-tracks` | Public | Top tracks (`?range=short_term\|medium_term\|long_term`) |
+| `GET /api/spotify/auth` | Admin | One-time Spotify OAuth setup |
+| `GET /api/spotify/callback` | Public | Spotify OAuth callback (writes refresh token to .env) |
+| `GET /api/spotify/status` | Public | Config status (configured, hasRefreshToken) |
 
 ---
 
@@ -315,6 +322,9 @@ Rules:
 | Tier / token config | `client/src/organizer/lib/tier.js` |
 | Sidebar HTML | `client/src/organizer/components/sidebar.js` |
 | Visual effects | `client/src/effects/` |
+| Spotify widget (home hero) | `client/src/components/spotify-widget.js` |
+| Spotify floating side panel | `client/src/components/live-activity-panel.js` |
+| Spotify routes | `server/routes/spotify.js` |
 | Home page | `client/src/pages/home.js` |
 | Login + dev login UI | `client/src/pages/login.js` |
 | Design tokens | `client/src/styles/global.css` |

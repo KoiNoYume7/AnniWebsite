@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "mcp__Claude_Preview__preview_start"
+      "mcp__Claude_Preview__preview_start",
+      "Bash(node server.js)",
+      "Bash(curl -s http://127.0.0.1:4000/api/spotify/status)",
+      "Bash(curl -s http://127.0.0.1:4000/api/spotify/now-playing)",
+      "Bash(curl -s \"http://127.0.0.1:4000/api/spotify/recent-tracks?limit=3\")",
+      "Bash(curl -s -v \"http://127.0.0.1:4000/api/spotify/recent-tracks?limit=3\")",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //PID 12728 //F)"
     ]
   }
 }

@@ -2,6 +2,7 @@
 // Organizer-first: leads with the product, personal bio second.
 
 import projectsData from '../data/projects.json'
+import { mountSpotifyWidget, unmountSpotifyWidget } from '../components/spotify-widget.js'
 
 export function prefetchGitHub() {
   // No longer needed — projects load from compiled JSON.
@@ -97,6 +98,13 @@ export async function renderHome(root) {
           </div>
 
         </div>
+
+        <!-- ── Live Activity — sits inside the builder context ── -->
+        <div class="home-live-activity reveal" style="animation-delay:0.3s">
+          <p class="section-eyebrow">Currently vibing to</p>
+          <div id="spotify-mount"></div>
+        </div>
+
       </div>
     </section>
 
@@ -159,6 +167,13 @@ export async function renderHome(root) {
       </div>
     </section>
   `
+
+  // ── Spotify widget ──
+  const spotifyMount = document.getElementById('spotify-mount')
+  if (spotifyMount) {
+    unmountSpotifyWidget()  // clean up any previous instance
+    mountSpotifyWidget(spotifyMount)
+  }
 
   // ── Terminal animation ──
   const lines = [

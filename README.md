@@ -42,7 +42,9 @@ AnniWebsite/
 │       │   └── easter-eggs.js     # Konami code, logo ×7, /anni route
 │       ├── components/            # Shared UI
 │       │   ├── nav.js
-│       │   └── footer.js
+│       │   ├── footer.js
+│       │   ├── spotify-widget.js      # Home-page "Now Playing" hero card (SSE + recent tracks)
+│       │   └── live-activity-panel.js # Floating bottom-right panel, all routes except home/login
 │       ├── pages/                 # Site pages (one file per route)
 │       │   ├── home.js            # Organizer-first hero + featured projects
 │       │   ├── about.js           # Reads from data/about.json
