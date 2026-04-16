@@ -13,7 +13,8 @@ import { initStarfield }                               from './effects/starfield
 import { initCursor }                                  from './effects/cursor.js'
 import { initKonami, initLogoSecret, registerAnniRoute } from './effects/easter-eggs.js'
 
-import { prefetchGitHub } from './pages/home.js'
+import { prefetchGitHub }           from './pages/home.js'
+import { mountLiveActivityPanel }   from './components/live-activity-panel.js'
 
 // Register the hidden /anni route
 registerAnniRoute(routes)
@@ -29,6 +30,7 @@ renderFooter(document.getElementById('footer-root'))
 
 initLogoSecret()
 prefetchGitHub()   // warm GitHub cache before home page renders
+mountLiveActivityPanel()  // floating Spotify panel — hidden on home/login, dismissible
 navigate()
 
 // ── Re-exports for backwards compatibility ──

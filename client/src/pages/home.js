@@ -98,11 +98,18 @@ export async function renderHome(root) {
           </div>
 
         </div>
+
+        <!-- ── Live Activity — sits inside the builder context ── -->
+        <div class="home-live-activity reveal" style="animation-delay:0.3s">
+          <div class="home-live-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:var(--accent)"><circle cx="12" cy="12" r="4"/><path d="M12 2a10 10 0 0 0-7.07 2.93l1.41 1.41A8 8 0 0 1 12 4V2z" opacity=".4"/><path d="M19.07 4.93l-1.41 1.41A8 8 0 0 1 20 12h2a10 10 0 0 0-2.93-7.07z" opacity=".4"/><path d="M4 12a8 8 0 0 1 2.34-5.66L4.93 4.93A10 10 0 0 0 2 12h2z" opacity=".4"/><path d="M12 20a8 8 0 0 1-5.66-2.34l-1.41 1.41A10 10 0 0 0 12 22v-2z" opacity=".4"/><path d="M20 12a8 8 0 0 1-2.34 5.66l1.41 1.41A10 10 0 0 0 22 12h-2z" opacity=".4"/></svg>
+            <span>Currently vibing to</span>
+          </div>
+          <div id="spotify-mount"></div>
+        </div>
+
       </div>
     </section>
-
-    <!-- ── Spotify Now Playing ── -->
-    <div id="spotify-mount"></div>
 
     <hr class="divider" />
 

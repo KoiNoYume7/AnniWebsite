@@ -24,6 +24,9 @@ const oauthStates = new Map()
 // ── SSE state ──
 const sseClients = new Set()
 let cachedState = { ok: true, playing: false }
+let cachedRecent = []                 // mirror of recently-played (small cache)
+let recentFetchedAt = 0               // unix ms — refresh every few minutes
+const RECENT_TTL_MS = 3 * 60_000      // 3 minutes
 let pollInterval = null
 
 // ── Token management ──
@@ -117,6 +120,55 @@ async function fetchNowPlaying() {
   }
 }
 
+// ── Fetch recently played (shared by REST + SSE) ──
+
+async function fetchRecentTracks(limit = 6) {
+  const configured = !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET)
+  if (!configured || !SPOTIFY_REFRESH_TOKEN) return []
+
+  const token = await getAccessToken()
+  if (!token) return []
+
+  try {
+    const spotRes = await fetch(
+      `https://api.spotify.com/v1/me/player/recently-played?limit=${limit}`,
+      { headers: { 'Authorization': `Bearer ${token}` } }
+    )
+    if (!spotRes.ok) {
+      const body = await spotRes.text().catch(() => '')
+      console.error(`[spotify] Recent tracks ${spotRes.status}:`, body.slice(0, 200))
+      return []
+    }
+
+    const data = await spotRes.json()
+    return (data.items || []).map(it => {
+      const t = it.track
+      return {
+        name:      t.name,
+        artist:    t.artists.map(a => a.name).join(', '),
+        album:     t.album.name,
+        albumArt:  t.album.images?.[2]?.url || t.album.images?.[1]?.url || t.album.images?.[0]?.url || null,
+        url:       t.external_urls?.spotify || null,
+        played_at: it.played_at,
+      }
+    })
+  } catch (err) {
+    console.error('[spotify] Recent tracks error:', err.message)
+    return []
+  }
+}
+
+async function getCachedRecent() {
+  if (Date.now() - recentFetchedAt > RECENT_TTL_MS) {
+    const fresh = await fetchRecentTracks(6)
+    if (fresh.length) {
+      cachedRecent = fresh
+      recentFetchedAt = Date.now()
+    }
+  }
+  return cachedRecent
+}
+
 // ── SSE broadcast ──
 
 function broadcast(data) {
@@ -128,8 +180,16 @@ function broadcast(data) {
 
 async function pollSpotify() {
   const state = await fetchNowPlaying()
+  const prevTrackId = cachedState.track?.url || null
+  const nextTrackId = state.track?.url || null
   const changed = JSON.stringify(state) !== JSON.stringify(cachedState)
   cachedState = state
+
+  // Track changed → invalidate recent cache so the carousel stays fresh
+  if (prevTrackId && nextTrackId && prevTrackId !== nextTrackId) {
+    recentFetchedAt = 0
+  }
+
   if (changed) broadcast(state)
 }
 
@@ -185,6 +245,17 @@ export function registerSpotifyRoutes(app, { FRONTEND, requireAuth }) {
       sseClients.delete(res)
       stopPollingIfEmpty()
     })
+  })
+
+  // ── GET /api/spotify/recent-tracks — public ──
+  app.get('/api/spotify/recent-tracks', async (req, res) => {
+    if (!configured || !SPOTIFY_REFRESH_TOKEN) {
+      return res.json({ ok: true, tracks: [], reason: 'not_configured' })
+    }
+    const limit = Math.min(parseInt(req.query.limit) || 6, 50)
+    // Fast path: serve cached + refresh in background
+    const tracks = await getCachedRecent()
+    res.json({ ok: true, tracks: tracks.slice(0, limit) })
   })
 
   // ── GET /api/spotify/top-tracks — public ──
@@ -246,7 +317,7 @@ export function registerSpotifyRoutes(app, { FRONTEND, requireAuth }) {
       client_id:     SPOTIFY_CLIENT_ID,
       response_type: 'code',
       redirect_uri:  `${FRONTEND}/api/spotify/callback`,
-      scope:         'user-read-currently-playing user-read-playback-state user-top-read',
+      scope:         'user-read-currently-playing user-read-playback-state user-read-recently-played user-top-read',
       state,
     })
 
