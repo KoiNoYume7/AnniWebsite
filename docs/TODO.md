@@ -18,6 +18,8 @@
 
 **Removed**: Pi dashboard (`#/status`), Python stats API (`stats/`), nginx `/api/stats` proxy — didn't fit the site direction.
 
+**Fixed**: Sign-out bug — `/api/auth/logout` was shadowed by `/api/auth/:provider` (Express matched `:provider = "logout"`). Route moved above the parameterized route.
+
 Next up: **Phase 2** — feature modules (todos, calendar, reminders, finance).
 
 ---

@@ -289,6 +289,7 @@ Rules:
 - Money in `finance_entries` is **cents** — never store or display as floats
 - `tokens_reset_at` is Unix epoch (seconds) — compare with `Math.floor(Date.now() / 1000)`
 - Content pages import from `../data/*.json` — if the data files are missing, run `node scripts/compile-all.js`
+- **Route ordering in Express**: `/api/auth/logout` MUST be defined before `/api/auth/:provider`, otherwise `:provider` matches "logout" as a provider name and the logout route never fires. This was a real bug that broke sign-out for weeks.
 
 ---
 

@@ -246,6 +246,20 @@ app.get('/api/auth/me', (req, res) => {
 // ── User routes (extracted to server/routes/user.js) ──
 registerUserRoutes(app, { requireAuth })
 
+// GET /api/auth/logout — MUST be before :provider so it doesn't match as a provider name
+app.get('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) console.error('[logout] Session destroy error:', err)
+    res.clearCookie('connect.sid', {
+      path: '/',
+      httpOnly: true,
+      secure: req.secure,
+      sameSite: 'lax',
+    })
+    res.json({ ok: true })
+  })
+})
+
 // GET /api/auth/:provider — kick off OAuth flow
 app.get('/api/auth/:provider', (req, res) => {
   const p = providers[req.params.provider]
@@ -345,18 +359,7 @@ app.get('/api/auth/callback/:provider', async (req, res) => {
   }
 })
 
-// GET /api/auth/logout
-app.get('/api/auth/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie('connect.sid', {
-      path: '/',
-      httpOnly: true,
-      secure: 'auto',
-      sameSite: 'lax',
-    })
-    res.json({ ok: true })
-  })
-})
+// (logout route is defined above, before :provider, to avoid route shadowing)
 
 // Health check
 app.get('/api/health', (req, res) => {
