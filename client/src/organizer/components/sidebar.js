@@ -50,9 +50,8 @@ export function buildSidebar(user) {
 
     ${user.role === 'admin' ? `
       <div class="card organizer-admin-card">
-        <p class="organizer-eyebrow">Admin tools</p>
-        <p>Pi telemetry lives at the legacy status page.</p>
-        <button class="btn btn-ghost" onclick="navigate('status')">Open status dashboard →</button>
+        <p class="organizer-eyebrow">Admin</p>
+        <p>You have admin privileges. Admin panel coming in Phase 5.</p>
       </div>` : ''}
   `
 }

@@ -2,36 +2,29 @@ server {
     listen 80;
     server_name yumehana.dev www.yumehana.dev;
 
-    root /srv/storage/AnniWebsite;
+    # Static root lives on the SD card so the site stays up
+    # even when the external storage drive is unplugged.
+    root /opt/anni/www;
     index index.html;
 
-    access_log /srv/backup/AnniWebsite/logs/nginx/access.log;
-    error_log  /srv/backup/AnniWebsite/logs/nginx/error.log;
+    access_log /var/log/nginx/anni-access.log;
+    error_log  /var/log/nginx/anni-error.log;
 
     # ── Frontend SPA ──
     location / {
         try_files $uri $uri/ /index.html;
     }
 
-    # ── Stats API → :5000 (must stay above catch-all) ──
-    location /api/stats {
-        proxy_pass          http://127.0.0.1:5000;
-        proxy_http_version  1.1;
-        proxy_set_header    Host              $host;
-        proxy_set_header    X-Real-IP         $remote_addr;
-        proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_connect_timeout 5s;
-        proxy_read_timeout    10s;
-    }
-
-    # ── All other API traffic → Node :4000 ──
+    # ── All API traffic → Node :4000 ──
     location /api/ {
         proxy_pass          http://127.0.0.1:4000;
         proxy_http_version  1.1;
         proxy_set_header    Host              $host;
         proxy_set_header    X-Real-IP         $remote_addr;
         proxy_set_header    X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header    X-Forwarded-Proto $scheme;
+        # Trust the Proto header set by Cloudflare Tunnel — $scheme
+        # would always be "http" here since nginx only listens on :80.
+        proxy_set_header    X-Forwarded-Proto $http_x_forwarded_proto;
         proxy_set_header    Cookie            $http_cookie;
         proxy_pass_header   Set-Cookie;
         proxy_set_header    Connection        '';

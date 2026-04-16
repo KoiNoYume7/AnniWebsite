@@ -246,6 +246,20 @@ app.get('/api/auth/me', (req, res) => {
 // ── User routes (extracted to server/routes/user.js) ──
 registerUserRoutes(app, { requireAuth })
 
+// GET /api/auth/logout — MUST be before :provider so it doesn't match as a provider name
+app.get('/api/auth/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) console.error('[logout] Session destroy error:', err)
+    res.clearCookie('connect.sid', {
+      path: '/',
+      httpOnly: true,
+      secure: req.secure,
+      sameSite: 'lax',
+    })
+    res.json({ ok: true })
+  })
+})
+
 // GET /api/auth/:provider — kick off OAuth flow
 app.get('/api/auth/:provider', (req, res) => {
   const p = providers[req.params.provider]
@@ -345,12 +359,7 @@ app.get('/api/auth/callback/:provider', async (req, res) => {
   }
 })
 
-// GET /api/auth/logout
-app.get('/api/auth/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.json({ ok: true })
-  })
-})
+// (logout route is defined above, before :provider, to avoid route shadowing)
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -360,6 +369,48 @@ app.get('/api/health', (req, res) => {
 // App metadata (dev flag, frontend URL)
 app.get('/api/meta', (req, res) => {
   res.json({ ok: true, devMode: DEV_MODE, frontend: FRONTEND })
+})
+
+// POST /api/contact — forward contact form to Discord webhook
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL || ''
+
+app.post('/api/contact', async (req, res) => {
+  const { name, email, subject, message } = req.body || {}
+  if (!name || !message) {
+    return res.status(400).json({ ok: false, error: 'Name and message are required' })
+  }
+
+  if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL === 'YOUR_DISCORD_WEBHOOK_URL_HERE') {
+    // No webhook configured — accept silently in dev, fail in prod
+    if (DEV_MODE) return res.json({ ok: true, demo: true })
+    return res.status(503).json({ ok: false, error: 'Contact form is not configured yet' })
+  }
+
+  try {
+    const embed = {
+      title: `📬 New message: ${subject || '(no subject)'}`,
+      color: 0x63d2be,
+      fields: [
+        { name: 'From', value: name, inline: true },
+        { name: 'Email', value: email || 'not provided', inline: true },
+        { name: 'Message', value: message.slice(0, 1024) },
+      ],
+      footer: { text: 'yumehana.dev contact form' },
+      timestamp: new Date().toISOString(),
+    }
+
+    const webhookRes = await fetch(DISCORD_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ embeds: [embed] }),
+    })
+
+    if (!webhookRes.ok) throw new Error(`Webhook returned ${webhookRes.status}`)
+    res.json({ ok: true })
+  } catch (err) {
+    console.error('[contact] Webhook error:', err.message)
+    res.status(502).json({ ok: false, error: 'Failed to deliver message' })
+  }
 })
 
 // ── Start ──

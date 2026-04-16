@@ -4,6 +4,16 @@
 #  Run from your dev machine: ./deploy.sh
 #  Builds the frontend, copies everything to the Pi,
 #  and restarts the backend service automatically.
+#
+#  Pi layout (SD card — always available):
+#    /opt/anni/www      → built frontend
+#    /opt/anni/server   → Node/Express backend + sessions.db
+#    /opt/anni/stats    → Python stats API
+#
+#  The organizer DB lives on the storage drive at
+#  /srv/storage/AnniWebsite/server/db/organizer.db and is
+#  symlinked into /opt/anni/server/db/organizer.db. Deploy
+#  scripts never touch that file.
 # ─────────────────────────────────────────────────────────
 
 set -e  # exit on any error
@@ -11,8 +21,9 @@ set -e  # exit on any error
 # ── Config — change these if needed ──
 PI_USER="akira"
 PI_HOST="yme-04"
-PI_WEB="/srv/storage/AnniWebsite"
-PI_SERVER="/srv/storage/AnniWebsite/server"
+PI_WEB="/opt/anni/www"
+PI_SERVER="/opt/anni/server"
+PI_STATS="/opt/anni/stats"
 
 # ── Colours ──
 GREEN='\033[0;32m'
@@ -80,13 +91,19 @@ fi
 # ── Deploy backend ──
 if $DEPLOY_SERVER; then
   log "Deploying backend to ${PI_HOST}:${PI_SERVER}..."
+  # --exclude db/*.db preserves organizer.db (symlinked to /srv/storage)
+  # and sessions.db (local SQLite session store) on the Pi
   rsync -az \
     --exclude='.DS_Store' \
     --exclude='node_modules/' \
     --exclude='.env' \
+    --exclude='db/*.db' \
+    --exclude='db/*.db-journal' \
+    --exclude='db/*.db-wal' \
+    --exclude='db/*.db-shm' \
     server/ \
     "${PI_USER}@${PI_HOST}:${PI_SERVER}/"
-  ok "Backend files synced (.env preserved)"
+  ok "Backend files synced (.env, organizer.db, sessions.db preserved)"
 
   log "Installing backend dependencies on Pi..."
   ssh "${PI_USER}@${PI_HOST}" "cd ${PI_SERVER} && npm install --omit=dev 2>&1 | tail -3"
@@ -106,12 +123,12 @@ if $DEPLOY_SERVER; then
 fi
 
 # ── Deploy stats API if it exists ──
-if ssh "${PI_USER}@${PI_HOST}" "test -f /srv/storage/AnniWebsite/stats/stats.py" 2>/dev/null; then
+if ssh "${PI_USER}@${PI_HOST}" "test -f ${PI_STATS}/stats.py" 2>/dev/null; then
   log "Deploying stats API..."
   rsync -az \
     --exclude='.DS_Store' \
     stats/ \
-    "${PI_USER}@${PI_HOST}:/srv/storage/AnniWebsite/stats/"
+    "${PI_USER}@${PI_HOST}:${PI_STATS}/"
   ssh "${PI_USER}@${PI_HOST}" "sudo systemctl restart anni-stats 2>/dev/null || true"
   ok "Stats API deployed"
 fi

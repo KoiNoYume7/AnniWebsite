@@ -57,3 +57,15 @@ Discord-style presence widget showing what KoiNoYume7 is listening to right now,
 - **Public roadmap page** (`#/roadmap`) — rendered from `docs/TODO.md` so it stays in sync with actual dev state automatically
 - **Dark/light mode per-page memory** — remember which page you were on and scroll position across theme changes
 - **Organizer public share links** — share a read-only view of your todo list or finance summary with a signed token (Phase 5+)
+
+---
+
+## Resolved ideas
+
+### ~~Rework or scrap `#/status` (Pi stats dashboard)~~
+
+**Decision: Deleted.** The Pi dashboard (`#/status`), Python stats API (`stats/`), and nginx `/api/stats` proxy block have been removed. The full status page was maintenance overhead for something nobody but the admin sees. If server health monitoring is needed, use a proper tool (Uptime Kuma, Grafana, etc.) instead of building it into the website.
+
+### ~~Discord server invite~~
+
+**Decision: Disabled.** The Discord CTA on the home page is preserved but greyed out with `opacity:0.55; pointer-events:none`. It shows "Coming Soon" instead of a join link. Re-enable it by removing those styles in `home.js` and updating the invite URL when the server is ready.

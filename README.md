@@ -1,7 +1,7 @@
 # AnniWebsite
 
 Personal website + AI life organizer for **KoiNoYume7**.
-Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
+Live at [yumehana.dev](https://yumehana.dev) · Self-hosted.
 
 ---
 
@@ -15,8 +15,8 @@ Live at [yumehana.dev](https://yumehana.dev) · Self-hosted on Raspberry Pi 4.
 | Auth | OAuth (GitHub, Discord, Google) — open registration, role-based |
 | Reverse proxy | nginx |
 | Tunnel | Cloudflare Tunnel (no open inbound ports) |
-| Server | Raspberry Pi 4, Raspberry Pi OS Lite 64-bit |
-| Storage | NTFS external drives at `/srv/storage` + `/srv/backup` |
+| Code + static | SD card at `/opt/anni/{www,server}` (always available) |
+| User data | `organizer.db` on external drive at `/srv/storage` (hot-pluggable) |
 | VPN | Tailscale (SSH + Samba access only) |
 
 ---
@@ -30,6 +30,7 @@ AnniWebsite/
 │   ├── public/
 │   └── src/
 │       ├── main.js                # Thin entry — wires lib/, effects/, pages/
+│       ├── data/                  # Compiled content (gitignored, built by scripts/)
 │       ├── lib/                   # Pure logic modules
 │       │   ├── router.js          # Hash-based SPA router
 │       │   ├── toast.js           # showToast utility
@@ -43,13 +44,12 @@ AnniWebsite/
 │       │   ├── nav.js
 │       │   └── footer.js
 │       ├── pages/                 # Site pages (one file per route)
-│       │   ├── home.js            # Organizer-first hero + projects
-│       │   ├── about.js
-│       │   ├── projects.js
-│       │   ├── blog.js
-│       │   ├── contact.js
-│       │   ├── login.js
-│       │   └── status.js          # Admin-only Pi dashboard
+│       │   ├── home.js            # Organizer-first hero + featured projects
+│       │   ├── about.js           # Reads from data/about.json
+│       │   ├── projects.js        # Reads from data/projects.json
+│       │   ├── blog.js            # Reads from data/devlogs.json
+│       │   ├── contact.js         # Posts to /api/contact
+│       │   └── login.js
 │       ├── organizer/             # Self-contained organizer module
 │       │   ├── index.js           # Entry point — auth check + shell render
 │       │   ├── lib/
@@ -63,7 +63,6 @@ AnniWebsite/
 │       │       ├── reminders.js
 │       │       ├── finance.js
 │       │       └── ai-chat.js
-│       ├── posts/                 # Markdown blog posts
 │       └── styles/
 │           ├── global.css         # Tokens, reset, animations, dev banner
 │           ├── components.css     # Shared: buttons, cards, nav, footer, forms
@@ -72,8 +71,19 @@ AnniWebsite/
 │               ├── home.css
 │               ├── about.css
 │               └── contact.css
+├── content/                       # Source content (edit these)
+│   ├── projects.json              # Project metadata + featured flags
+│   ├── about.json                 # Bio, skills, facts for the about page
+│   └── devlogs/                   # Devlog posts
+│       ├── config.json            # Devlog metadata (title, tags, sorting)
+│       └── *.md                   # One markdown file per post
+├── scripts/                       # Content compilers
+│   ├── fetch-repos.js             # Fetches GitHub repos → merges with projects.json
+│   ├── compile-devlogs.js         # Compiles markdown posts → devlogs.json
+│   ├── compile-about.js           # Compiles about.json → client data
+│   └── compile-all.js             # Runs all compilers in sequence
 ├── server/                        # Express backend
-│   ├── server.js                  # Setup, middleware, auth routes
+│   ├── server.js                  # Setup, middleware, auth routes, /api/contact
 │   ├── db/
 │   │   ├── db.js                  # SQLite singleton (WAL + FK)
 │   │   └── schema.sql             # Full schema
@@ -82,15 +92,12 @@ AnniWebsite/
 │   ├── .env.example
 │   ├── anni-website.service       # systemd unit
 │   └── SETUP.md
-├── stats/                         # Python Pi stats API
-│   ├── stats.py
-│   └── anni-stats.service
 ├── nginx/
 │   └── yumehana.dev.nginx
 ├── docs/
 │   ├── AI_INSTRUCTIONS.md         # Instructions for AI/coding assistants
 │   ├── TODO.md                    # Organizer roadmap + phase tracker
-│   └── IDEAS.md                   # Unstructured future ideas (Spotify, etc.)
+│   └── IDEAS.md                   # Unstructured future ideas
 ├── deploy.sh
 ├── deploy.ps1
 └── README.md
@@ -98,18 +105,52 @@ AnniWebsite/
 
 ---
 
+## Content system
+
+All page content is **data-driven**. You edit files in `content/`, run the compilers, and the site picks up the changes.
+
+| Content | Source file | Compiler | Output |
+|---|---|---|---|
+| Projects | `content/projects.json` | `scripts/fetch-repos.js` | `client/src/data/projects.json` |
+| About me | `content/about.json` | `scripts/compile-about.js` | `client/src/data/about.json` |
+| Devlogs | `content/devlogs/*.md` + `config.json` | `scripts/compile-devlogs.js` | `client/src/data/devlogs.json` |
+
+```bash
+node scripts/compile-all.js   # runs all three compilers
+```
+
+The `client/src/data/` directory is gitignored — it's always regenerated from source.
+
+### Adding a new devlog
+
+1. Create `content/devlogs/your-slug.md` with the post body
+2. Add an entry to `content/devlogs/config.json` with title, date, tags, sorting
+3. Run `node scripts/compile-devlogs.js`
+
+### Editing projects
+
+1. Edit `content/projects.json` — set `featured`, `icon`, `description`, `phase`, `sort_order`
+2. Run `node scripts/fetch-repos.js` — fetches live GitHub data and merges with your config
+3. Projects with `"featured": true` show on the home page; the rest appear under "Show all" on `#/projects`
+
+### Editing the about page
+
+1. Edit `content/about.json` — bio paragraphs, skills, facts, infrastructure, learning
+2. Run `node scripts/compile-about.js`
+
+---
+
 ## Pages
 
 | Route | Description | Access |
 |---|---|---|
-| `#/` | Organizer-first hero, feature grid, projects, Discord CTA | Public |
-| `#/about` | Bio, skills, fun facts | Public |
-| `#/projects` | GitHub-fetched project cards | Public |
-| `#/blog` | Devlog with markdown posts | Public |
-| `#/contact` | Discord webhook contact form | Public |
+| `#/` | Organizer-first hero, feature grid, featured projects | Public |
+| `#/about` | Bio, skills, fun facts (data-driven) | Public |
+| `#/projects` | Featured + all projects (data-driven) | Public |
+| `#/blog` | Devlog with markdown posts (data-driven) | Public |
+| `#/contact` | Contact form → server → Discord webhook | Public |
 | `#/login` | OAuth login (GitHub / Discord / Google) | Public |
 | `#/organizer` | AI life organizer dashboard | Auth required |
-| `#/status` | Live Pi system dashboard | Admin only |
 | `#/anni` | Secret page | Hidden |
 
 ---
@@ -152,6 +193,9 @@ No other files need to change.
 ## Dev setup
 
 ```bash
+# Compile content (first time, or after editing content/)
+node scripts/compile-all.js
+
 # Frontend
 cd client && npm install && npm run dev
 # → http://localhost:3000 (proxies /api/* to :4000)
@@ -160,9 +204,6 @@ cd client && npm install && npm run dev
 cd server && npm install
 cp .env.example .env   # set SESSION_SECRET + DEV_MODE=true
 node server.js         # → http://127.0.0.1:4000
-
-# Stats API (optional — only needed for #/status page)
-python stats/stats.py  # → http://127.0.0.1:5000
 ```
 
 ### Dev login (bypass OAuth locally)
@@ -182,8 +223,10 @@ OAuth callback URLs point to the production domain. On localhost, use dev login 
 ./deploy.ps1   # Windows — ssh/scp
 ```
 
-Deploy scripts preserve `server/.env` and `server/db/*.db` on the Pi.
-See `server/SETUP.md` for full OAuth + nginx setup.
+Deploy scripts push code to `/opt/anni/` and preserve `server/.env`
+and `server/db/*.db` (both the local `sessions.db` and the symlinked
+`organizer.db`). See `server/SETUP.md` for full OAuth + nginx +
+directory-layout setup.
 
 ---
 
@@ -193,12 +236,18 @@ See `server/SETUP.md` for full OAuth + nginx setup.
 Browser
   └── Cloudflare Tunnel (HTTPS)
         └── nginx :80
-              ├── /             → /srv/storage/AnniWebsite/ (static)
-              ├── /api/stats    → 127.0.0.1:5000 (Python stats)
-              └── /api/*        → 127.0.0.1:4000 (Express)
-                                      └── organizer.db (SQLite)
+              ├── /         → /opt/anni/www/ (static, SD card)
+              └── /api/*    → 127.0.0.1:4000 (Express, /opt/anni/server)
+                                  └── db/organizer.db ──► /srv/storage/…
 ```
 
+- Code lives on the SD card under `/opt/anni/{www,server}` so
+  the site stays up even if the external storage drive is unplugged.
+- The organizer database (`organizer.db`) is the only user data that
+  lives on `/srv/storage` — symlinked into `server/db/` so `db.js`
+  opens it transparently. When the drive is missing the backend
+  serves a degraded organizer ("under maintenance") while login, home,
+  blog, and projects keep working.
 - Backend binds loopback only (`127.0.0.1:4000`) — never directly exposed
 - SSH + Samba via Tailscale only; UFW blocks all other inbound
 

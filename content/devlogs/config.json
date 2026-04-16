@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "rpi4-setup-2026",
+    "title": "Setting up a secure RPi4 home server from scratch",
+    "subtitle": "From a fresh SD card to a locked-down, always-on server",
+    "date": "2026-03-10",
+    "tags": ["self-hosting", "linux", "security"],
+    "sort_order": 1,
+    "published": true
+  },
+  {
+    "slug": "anniproxy-devlog-1",
+    "title": "AnniProxy devlog #1 — why I'm building this",
+    "subtitle": "Most proxy solutions don't cut it. Time to build my own.",
+    "date": "2026-03-05",
+    "tags": ["anniproxy", "devlog", "privacy"],
+    "sort_order": 2,
+    "published": true
+  },
+  {
+    "slug": "organizer-vision",
+    "title": "The Organizer — building a self-hosted life OS",
+    "subtitle": "Why I'm building an all-in-one organizer instead of using five different apps",
+    "date": "2026-03-20",
+    "tags": ["organizer", "devlog", "vision"],
+    "sort_order": 3,
+    "published": true
+  },
+  {
+    "slug": "sd-card-layout-rework",
+    "title": "Reworking the Pi's file layout for reliability",
+    "subtitle": "Separating code from data so unplugging a drive doesn't kill the site",
+    "date": "2026-04-14",
+    "tags": ["infrastructure", "self-hosting", "devlog"],
+    "sort_order": 4,
+    "published": true
+  }
+]

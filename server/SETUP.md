@@ -1,9 +1,36 @@
-# AnniBackend — OAuth Setup Guide
+# AnniWebsite — Pi Setup Guide
+
+Full one-time setup for the Pi. If you're just pushing code changes,
+use `deploy.sh` / `deploy.ps1` from the repo root instead.
+
+---
 
 ## Overview
 
-The backend runs as a Node.js service on your Pi (port 4000), proxied through nginx.
-It handles OAuth for GitHub, Discord, and Google — only your whitelisted accounts can log in.
+The site runs on a Raspberry Pi 4, split across the SD card and an
+external storage drive:
+
+```
+/opt/anni/                   # SD card — always available
+├── www/                     # Built frontend (Vite output)
+└── server/                  # Node/Express backend
+    ├── server.js
+    ├── routes/
+    ├── db/
+    │   ├── db.js
+    │   ├── schema.sql
+    │   ├── sessions.db      # session store (local to SD)
+    │   └── organizer.db ──► symlink to storage drive
+    └── .env
+
+/srv/storage/AnniWebsite/    # External USB drive (hot-pluggable)
+└── server/db/organizer.db   # real file lives here
+```
+
+The backend listens on `127.0.0.1:4000` and nginx proxies
+`yumehana.dev/api/*` to it. Only user data (`organizer.db`) lives
+on the storage drive — so unplugging the drive degrades the
+organizer but keeps the rest of the site up.
 
 ---
 
@@ -58,31 +85,49 @@ Find your Discord user ID:
 
 ---
 
-## Step 2 — Deploy to the Pi
+## Step 2 — Create the Pi directory layout
+
+On the Pi:
 
 ```bash
-# On your Pi, as the services user
-sudo mkdir -p /home/services/AnniBackend
-sudo chown services:services /home/services/AnniBackend
+sudo mkdir -p /opt/anni/www /opt/anni/server/db
+sudo chown -R akira:akira /opt/anni
 
-# Copy files (from your dev machine)
-scp -r AnniBackend/* koi@rpi4:/home/services/AnniBackend/
+# Storage drive — where the organizer DB lives
+sudo mkdir -p /srv/storage/AnniWebsite/server/db
+sudo chown -R akira:akira /srv/storage/AnniWebsite
 
-# On the Pi
-cd /home/services/AnniBackend
-npm install
+# Symlink the organizer DB into the SD card tree so db.js can open it
+# at the hardcoded path. If the drive is unplugged the symlink is
+# dangling and the backend enters degraded mode.
+ln -sf /srv/storage/AnniWebsite/server/db/organizer.db \
+       /opt/anni/server/db/organizer.db
 ```
+
+Then from your dev machine push the code:
+
+```bash
+./deploy.sh         # Linux/macOS
+.\deploy.ps1        # Windows
+```
+
+The first deploy will copy `server/` to `/opt/anni/server/` and install
+Node dependencies. You still need to create `.env` by hand before the
+service will start.
 
 ---
 
 ## Step 3 — Configure .env
 
+On the Pi:
+
 ```bash
+cd /opt/anni/server
 cp .env.example .env
 nano .env
 ```
 
-Fill in all values. Generate SESSION_SECRET:
+Fill in all values. Generate `SESSION_SECRET`:
 ```bash
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 ```
@@ -92,19 +137,21 @@ Lock down the file:
 chmod 600 .env
 ```
 
+**Never put `.env` on the storage drive.** Deploy scripts preserve the
+SD-card copy, which is what you want.
+
 ---
 
-## Step 4 — Install systemd service
+## Step 4 — Install systemd services
 
 ```bash
-sudo cp anni-backend.service /etc/systemd/system/
+sudo cp /opt/anni/server/anni-website.service /etc/systemd/system/
 sudo systemctl daemon-reload
-sudo systemctl enable anni-backend
-sudo systemctl start anni-backend
+sudo systemctl enable --now anni-website
 
-# Check it's running
-sudo systemctl status anni-backend
-sudo journalctl -u anni-backend -f
+# Check
+sudo systemctl status anni-website
+sudo journalctl -u anni-website -f
 ```
 
 ---
@@ -112,25 +159,32 @@ sudo journalctl -u anni-backend -f
 ## Step 5 — Configure nginx
 
 ```bash
-sudo cp yumehana.dev.nginx /etc/nginx/sites-available/yumehana.dev
-sudo ln -s /etc/nginx/sites-available/yumehana.dev /etc/nginx/sites-enabled/
+sudo cp /opt/anni/server/../nginx/yumehana.dev.nginx \
+        /etc/nginx/sites-available/yumehana.dev
+sudo ln -sf /etc/nginx/sites-available/yumehana.dev \
+            /etc/nginx/sites-enabled/yumehana.dev
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
+The nginx config serves `/opt/anni/www` as the document root and logs
+to `/var/log/nginx/anni-{access,error}.log`. `X-Forwarded-Proto` is
+taken from Cloudflare's header so session cookies get the `Secure`
+flag correctly.
+
 ---
 
-## Step 6 — Update the frontend files
+## Step 6 — Storage drive auto-mount (optional but recommended)
 
-Replace these two files in your AnniWebsite:
-- `src/pages/login.js` → use the new `login.js` from this folder
-- `src/components/nav.js` → use the new `nav.js` from this folder
+If you want the storage drive to mount automatically on hot-plug, set
+up the systemd mount unit + udev rule — see the Pi's
+`/etc/udev/rules.d/99-anni-automount.rules` for the current working
+config. Without this, you need to `sudo systemctl start srv-storage.mount`
+after plugging the drive back in.
 
-Then rebuild and deploy:
-```bash
-npm run build
-sudo cp -r dist/* /var/www/html/
-```
+When the drive is unmounted, the organizer tab goes into "under
+maintenance" mode but login, home, blog, projects, and contact all keep
+working.
 
 ---
 
@@ -139,17 +193,17 @@ sudo cp -r dist/* /var/www/html/
 1. Visit `https://yumehana.dev/#/login`
 2. Click **Continue with GitHub**
 3. Authorize on GitHub
-4. You should be redirected to `#/status` logged in
+4. You should be redirected to `#/organizer` logged in
 
 If something goes wrong:
 ```bash
-sudo journalctl -u anni-backend -f   # live backend logs
-sudo tail -f /var/log/nginx/error.log # nginx errors
+sudo journalctl -u anni-website -f         # live backend logs
+sudo tail -f /var/log/nginx/anni-error.log # nginx errors
 ```
 
 ---
 
 ## UFW — no extra ports needed
 
-The backend only listens on `127.0.0.1:4000` (loopback only), so no firewall rules are needed.
-nginx proxies `/api/*` to it internally.
+The backend binds loopback only (`127.0.0.1:4000`), so no firewall
+rules are required for it. nginx proxies `/api/*` internally.
