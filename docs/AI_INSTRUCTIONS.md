@@ -114,6 +114,7 @@ server/
     schema.sql           ← Full schema
   routes/                ← Route modules — Phase 2+ goes here
     user.js              ← /api/user/me
+    spotify.js           ← Spotify OAuth, now-playing, SSE stream, recent/top tracks
   .env.example
   anni-website.service
   SETUP.md
@@ -271,6 +272,7 @@ journalctl -u anni-website -n 50 --no-pager
 - Static root: `/opt/anni/www`
 - Logs: `/var/log/nginx/anni-{access,error}.log`
 - `/api/` → Node :4000
+- `/api/spotify/stream` → dedicated SSE block with `proxy_buffering off`, `proxy_cache off`, `proxy_read_timeout 86400s`
 - Sets `X-Forwarded-Proto $http_x_forwarded_proto` so cookies keep the `Secure` flag behind Cloudflare
 
 Rules:
@@ -322,7 +324,7 @@ Rules:
 | Tier / token config | `client/src/organizer/lib/tier.js` |
 | Sidebar HTML | `client/src/organizer/components/sidebar.js` |
 | Visual effects | `client/src/effects/` |
-| Spotify widget (home hero) | `client/src/components/spotify-widget.js` |
+| Spotify widget (builder section) | `client/src/components/spotify-widget.js` |
 | Spotify floating side panel | `client/src/components/live-activity-panel.js` |
 | Spotify routes | `server/routes/spotify.js` |
 | Home page | `client/src/pages/home.js` |

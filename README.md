@@ -90,7 +90,8 @@ AnniWebsite/
 │   │   ├── db.js                  # SQLite singleton (WAL + FK)
 │   │   └── schema.sql             # Full schema
 │   ├── routes/                    # Route modules — drop Phase 2+ here
-│   │   └── user.js                # /api/user/*
+│   │   ├── user.js                # /api/user/*
+│   │   └── spotify.js             # Spotify OAuth, SSE stream, now-playing, recent/top tracks
 │   ├── .env.example
 │   ├── anni-website.service       # systemd unit
 │   └── SETUP.md
@@ -180,6 +181,18 @@ See `docs/TODO.md` for full implementation detail.
 4. Create backend routes in `server/routes/organizer/your-tab.js`, register in `server.js`
 
 No other files need to change.
+
+---
+
+## Spotify integration
+
+Live Activity widget in the builder section of the home page. Server polls Spotify every 10s and pushes changes to all connected browsers via **Server-Sent Events**.
+
+- **Three states**: Now Playing (green dot + equalizer), Paused (amber), Offline (grey)
+- **Album art** with subtle glow, animated progress bar, marquee for long track names
+- **Recently played / Top tracks** strip with tab toggle
+- **Floating panel** on non-home routes (`live-activity-panel.js`)
+- **Setup**: One-time admin OAuth at `/api/spotify/auth`, refresh token stored in `.env`
 
 ---
 

@@ -6,10 +6,10 @@ import { fetchUser }    from './lib/api.js'
 import { TAB_CONFIG }   from './lib/tier.js'
 import { buildSidebar } from './components/sidebar.js'
 
-import { render as renderTodos }     from './tabs/todos.js'
-import { render as renderCalendar }  from './tabs/calendar.js'
-import { render as renderReminders } from './tabs/reminders.js'
-import { render as renderFinance }   from './tabs/finance.js'
+import { render as renderTodos,    mount as mountTodos }    from './tabs/todos.js'
+import { render as renderCalendar, mount as mountCalendar } from './tabs/calendar.js'
+import { render as renderReminders, mount as mountReminders } from './tabs/reminders.js'
+import { render as renderFinance,   mount as mountFinance }   from './tabs/finance.js'
 import { render as renderAiChat }    from './tabs/ai-chat.js'
 
 const TAB_RENDERERS = {
@@ -18,6 +18,13 @@ const TAB_RENDERERS = {
   reminders: renderReminders,
   finance:   renderFinance,
   ai:        renderAiChat,
+}
+
+const TAB_MOUNTS = {
+  todos:     mountTodos,
+  calendar:  mountCalendar,
+  reminders: mountReminders,
+  finance:   mountFinance,
 }
 
 export async function renderOrganizer(root) {
@@ -94,6 +101,8 @@ export async function renderOrganizer(root) {
     if (content) {
       const fn = TAB_RENDERERS[next]
       content.innerHTML = fn ? fn(user) : ''
+      const mountFn = TAB_MOUNTS[next]
+      if (mountFn) mountFn(content, user)
     }
   }
 
