@@ -22,7 +22,15 @@
 
 **Spotify (v2.1)**: Live Activity widget in the builder section of the home page. SSE streaming from `/api/spotify/stream` (server polls every 10s, pushes deltas). Widget shows album art with subtle glow, track name (marquee for long titles), artist, animated equalizer + progress bar, and a recently played / top tracks strip with tab toggle. Three states: Now Playing, Paused, Offline — never fully hides. Styled to match site card design (`var(--surface)`, `var(--border)`). A floating dismissible panel (`live-activity-panel.js`) shows the same track on every non-home route.
 
-Next up: **Phase 2** — feature modules (todos, calendar, reminders, finance).
+**Phase 2 (v2.2) complete** — all four organizer feature modules are live:
+- **Todos**: CRUD + list grouping + priority/due-date pills + drag-to-reorder + inline edit
+- **Calendar**: lightweight monthly grid, click-to-create/edit modal, color picker, no external deps
+- **Reminders**: upcoming/due/delivered sections, repeat presets, 60s browser polling + Notification API
+- **Finance**: income/expense ledger, month filter, summary cards, category breakdown bars, CSV export
+
+All tabs: backend routes in `server/routes/organizer/`, `TAB_MOUNTS` lifecycle hook in organizer shell.
+
+Next up: **Phase 3** — AI Chat tab (Claude integration, token metering) or Phase 4 (Stripe subscriptions).
 
 ---
 

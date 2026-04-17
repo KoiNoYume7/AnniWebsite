@@ -112,9 +112,14 @@ server/
   db/
     db.js                ← SQLite singleton (WAL + FK pragmas)
     schema.sql           ← Full schema
-  routes/                ← Route modules — Phase 2+ goes here
+  routes/                ← Route modules
     user.js              ← /api/user/me
     spotify.js           ← Spotify OAuth, now-playing, SSE stream, recent/top tracks
+    organizer/
+      todos.js           ← /api/organizer/todos — CRUD + bulk reorder
+      events.js          ← /api/organizer/events — calendar events CRUD
+      reminders.js       ← /api/organizer/reminders — CRUD + delivered toggle
+      finance.js         ← /api/organizer/finance — ledger CRUD + summary
   .env.example
   anni-website.service
   SETUP.md
@@ -132,12 +137,14 @@ docs/
 
 ## Adding a new organizer tab (the intended workflow for Phase 2)
 
-1. Create `client/src/organizer/tabs/your-tab.js` — export `render(user)` returning an HTML string
-2. Import and register it in `client/src/organizer/index.js` → `TAB_RENDERERS`
+1. Create `client/src/organizer/tabs/your-tab.js` — export `render(user)` returning an HTML string, and optionally `mount(container, user)` for interactive wiring after innerHTML is set
+2. Import both in `client/src/organizer/index.js` → add to `TAB_RENDERERS` and `TAB_MOUNTS`
 3. Add entry to `TAB_CONFIG` in `client/src/organizer/lib/tier.js`
-4. Create `server/routes/organizer/your-tab.js` with CRUD routes, import in `server.js`
+4. Create `server/routes/organizer/your-tab.js`, export `registerYourTabRoutes(app, { requireAuth })`, import and call in `server.js`
 
-**No other files need to change.** This is the whole point of the isolation.
+**No other files need to change.**
+
+Note: if the tab has literal static routes AND parameterized `/:id` routes, always register the static ones first (same pitfall as the `/api/auth/logout` vs `/:provider` bug — and the `/todos/reorder` vs `/todos/:id` example).
 
 ---
 
