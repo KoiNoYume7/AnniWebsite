@@ -22,6 +22,17 @@
     "url_override": null
   },
   {
+    "name": "SC Tools",
+    "icon": "🚀",
+    "description": "Star Citizen toolset at sc.yumehana.dev. Currently: real-time Executive Hangar cycle tracker with per-light ETAs. Expanding to include contested zone loot tracking and group inventory.",
+    "tags": ["star-citizen", "tools", "vanilla-js", "self-hosted"],
+    "phase": "Early WIP",
+    "status": "wip",
+    "featured": true,
+    "sort_order": 4,
+    "url_override": "https://sc.yumehana.dev"
+  },
+  {
     "name": "AnniWIn11",
     "icon": "🪟",
     "description": "Windows 11 backup & restore tool. Makes re-installing windows way more bearable.",

@@ -36,11 +36,11 @@ export async function renderNav(root) {
       const { user } = await res.json()
       const btn = document.getElementById('navLoginBtn')
       if (btn) {
-        btn.textContent = 'Organizer'
+        btn.textContent = 'Account'
         btn.title = `Signed in as ${user.name}`
         btn.onclick = () => {
           closeNavMenu()
-          navigate('organizer')
+          navigate('login')
         }
       }
     }

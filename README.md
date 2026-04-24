@@ -46,7 +46,7 @@ AnniWebsite/
 │       │   ├── spotify-widget.js      # Home-page "Now Playing" hero card (SSE + recent tracks)
 │       │   └── live-activity-panel.js # Floating bottom-right panel, all routes except home/login
 │       ├── pages/                 # Site pages (one file per route)
-│       │   ├── home.js            # Organizer-first hero + featured projects
+│       │   ├── home.js            # Builder intro hero + SC Tools section + Spotify + featured projects
 │       │   ├── about.js           # Reads from data/about.json
 │       │   ├── projects.js        # Reads from data/projects.json
 │       │   ├── blog.js            # Reads from data/devlogs.json
@@ -89,14 +89,17 @@ AnniWebsite/
 │   ├── db/
 │   │   ├── db.js                  # SQLite singleton (WAL + FK)
 │   │   └── schema.sql             # Full schema
-│   ├── routes/                    # Route modules — drop Phase 2+ here
+│   ├── routes/                    # Route modules — drop Phase 3+ here
 │   │   ├── user.js                # /api/user/*
-│   │   └── spotify.js             # Spotify OAuth, SSE stream, now-playing, recent/top tracks
+│   │   ├── spotify.js             # Spotify OAuth, SSE stream, now-playing, recent/top tracks
+│   │   ├── sc.js                  # /api/sc/* — SC loot tracker (inventory, groups)
+│   │   └── organizer/             # Organizer CRUD routes (todos, events, reminders, finance)
 │   ├── .env.example
 │   ├── anni-website.service       # systemd unit
 │   └── SETUP.md
 ├── nginx/
-│   └── yumehana.dev.nginx
+│   ├── yumehana.dev.nginx         # Main site + /api/* proxy
+│   └── sc.yumehana.dev.nginx      # SC Tools subdomain — static root /opt/anni/sc
 ├── docs/
 │   ├── AI_INSTRUCTIONS.md         # Instructions for AI/coding assistants
 │   ├── TODO.md                    # Organizer roadmap + phase tracker
@@ -147,7 +150,7 @@ The `client/src/data/` directory is gitignored — it's always regenerated from 
 
 | Route | Description | Access |
 |---|---|---|
-| `#/` | Organizer-first hero, feature grid, featured projects | Public |
+| `#/` | Builder intro + terminal, SC Tools section, Spotify live activity, featured projects | Public |
 | `#/about` | Bio, skills, fun facts (data-driven) | Public |
 | `#/projects` | Featured + all projects (data-driven) | Public |
 | `#/blog` | Devlog with markdown posts (data-driven) | Public |
@@ -166,14 +169,14 @@ The Organizer is the main product — a self-hosted personal life OS.
 |---|---|---|
 | 0 | Database, open-auth, SQLite sessions, nginx `/api/*` | ✅ Done |
 | 1 | Organizer shell — sidebar, tabs, user profile, token bar | ✅ Done |
-| 2 | Todos, Calendar, Reminders, Finance tracker | 🔨 Next |
-| 3 | Claude AI — streaming chat, context injection, token budgets | 📋 Planned |
+| 2 | Todos, Calendar, Reminders, Finance tracker | ✅ Done |
+| 3 | Claude AI — streaming chat, context injection, token budgets | � Next |
 | 4 | Stripe — Basic ($5/mo / 200K tokens), Pro ($15/mo / 1M tokens) | 📋 Planned |
 | 5 | Data export, web push, email reminders, admin panel | 📋 Planned |
 
 See `docs/TODO.md` for full implementation detail.
 
-### Adding a new organizer tab (Phase 2+)
+### Adding a new organizer tab (Phase 3+)
 
 1. Create `client/src/organizer/tabs/your-tab.js` — export `render(user)` returning HTML
 2. Register it in `client/src/organizer/index.js` → `TAB_RENDERERS`
@@ -181,6 +184,18 @@ See `docs/TODO.md` for full implementation detail.
 4. Create backend routes in `server/routes/organizer/your-tab.js`, register in `server.js`
 
 No other files need to change.
+
+---
+
+## SC Tools (`sc.yumehana.dev`)
+
+Star Citizen toolset — pure static site (no build step) served from `/opt/anni/sc`. Lives in the `CZTimers` repo at `C:\Users\akira\CascadeProjects\CZTimers`.
+
+- **Isolated nav** — `anni-nav.js` / `anni-nav.css` render an SC-specific nav bar entirely separate from the main site's nav component
+- **SSO** — session cookie on `.yumehana.dev` shared with the main site; SC nav calls `/api/auth/me` on the main backend
+- **returnTo flow** — SC Login button links to `/#/login?returnTo=https://sc.yumehana.dev`; after OAuth the user lands back on the SC site
+- **Loot Tracker API** — `server/routes/sc.js` provides `/api/sc/inventory` and `/api/sc/groups` routes; DB tables `sc_inventory`, `sc_groups`, `sc_group_members` in `organizer.db`
+- **Deployment** — `deploy.ps1` runs `CZTimers/update-cfg.ps1` then scps `src/` to Pi
 
 ---
 
@@ -251,9 +266,12 @@ directory-layout setup.
 Browser
   └── Cloudflare Tunnel (HTTPS)
         └── nginx :80
-              ├── /         → /opt/anni/www/ (static, SD card)
-              └── /api/*    → 127.0.0.1:4000 (Express, /opt/anni/server)
-                                  └── db/organizer.db ──► /srv/storage/…
+              ├── yumehana.dev
+              │     ├── /         → /opt/anni/www/  (Vite build, SD card)
+              │     └── /api/*    → 127.0.0.1:4000  (Express backend)
+              │                         └── db/organizer.db ──► /srv/storage/…
+              └── sc.yumehana.dev
+                    └── /         → /opt/anni/sc/   (CZTimers static, SD card)
 ```
 
 - Code lives on the SD card under `/opt/anni/{www,server}` so

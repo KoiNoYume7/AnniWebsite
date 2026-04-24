@@ -25,7 +25,46 @@ The Pi dashboard (`#/status`) and Python stats API have been **removed** — the
 
 The Discord server invite CTA is **disabled** (server not ready yet). The design is preserved but greyed out.
 
+**Home page order (current):** Builder intro + terminal hero → SC Tools section → Spotify live activity → Featured projects → Discord CTA (disabled). The old organizer-first hero is archived (HTML comment) in `home.js`.
+
 See `docs/TODO.md` for the full roadmap and phase tracker.
+
+---
+
+## SC Tools subdomain (`sc.yumehana.dev`)
+
+A separate static site (repo: `CZTimers`, path: `C:\Users\akira\CascadeProjects\CZTimers`) served from `/opt/anni/sc` on the Pi. Isolated codebase — no Vite, no Node, pure static HTML/CSS/JS.
+
+### Relationship to AnniWebsite
+
+| Concern | How it works |
+|---|---|
+| Authentication | Shared SSO — session cookie on `.yumehana.dev`; SC nav calls `yumehana.dev/api/auth/me` with `credentials: 'include'` |
+| Login redirect | SC Login button → `yumehana.dev/#/login?returnTo=https://sc.yumehana.dev`; after OAuth the user lands back on the SC site |
+| Nav bar | Completely isolated — `src/anni-nav.js` renders SC-specific nav, no main-site links; add new SC pages to `SC_PAGES` array |
+| Deployment | `deploy.ps1` (AnniWebsite) runs `update-cfg.ps1` then scps `CZTimers/src/` to Pi before deploying the main site |
+| CORS | `server.js` `ALLOWED_ORIGINS` includes both `https://yumehana.dev` and `https://sc.yumehana.dev` |
+
+### returnTo OAuth flow
+
+`GET /api/auth/:provider?returnTo=<url>` — server validates the origin against `ALLOWED_ORIGINS` before storing in session. After callback, redirects to `session.returnTo` or `${FRONTEND}/#/login` (default — shows the logged-in account card, not auto-redirect to organizer).
+
+**Important:** The default post-login redirect is now `/#/login`, not `/#/organizer`. This is intentional — the login page shows an account card with a link to the organizer.
+
+### Nav button (main site)
+
+When logged in, the top-right nav button says **"Account"** (not "Organizer") and navigates to `#/login` (the logged-in account view). This is set in `client/src/components/nav.js`.
+
+### SC Tools key files (in CZTimers repo)
+
+| File | Purpose |
+|---|---|
+| `src/anni-nav.js` | SC nav + footer — isolated, SSO auth check, `SC_PAGES` list |
+| `src/anni-nav.css` | SC nav styles — uses CZTimers CSS tokens (`--bdr`, `--cyan`, `--fM`, `--fH`) |
+| `src/app.js` | Hangar Timer logic — all timer math, UI updates |
+| `src/styles.css` | Full sci-fi theme tokens and layout |
+| `src/index.html` | Static shell |
+| `update-cfg.ps1` | Fetch live anchor → write versioned `cfg-sc{ver}.dat` + `latest.json` |
 
 ---
 
@@ -66,7 +105,7 @@ client/src/
     nav.js                ← Site navigation
     footer.js             ← Site footer
   pages/                  ← Site pages (one file = one route)
-    home.js               ← Organizer-first hero, reads data/projects.json for featured
+    home.js               ← Builder intro + terminal hero, SC Tools section, Spotify, featured projects (organizer hero archived)
     about.js              ← Reads data/about.json
     projects.js           ← Reads data/projects.json, featured/all toggle
     blog.js               ← Reads data/devlogs.json
@@ -112,9 +151,14 @@ server/
   db/
     db.js                ← SQLite singleton (WAL + FK pragmas)
     schema.sql           ← Full schema
-  routes/                ← Route modules — Phase 2+ goes here
+  routes/                ← Route modules
     user.js              ← /api/user/me
     spotify.js           ← Spotify OAuth, now-playing, SSE stream, recent/top tracks
+    organizer/
+      todos.js           ← /api/organizer/todos — CRUD + bulk reorder
+      events.js          ← /api/organizer/events — calendar events CRUD
+      reminders.js       ← /api/organizer/reminders — CRUD + delivered toggle
+      finance.js         ← /api/organizer/finance — ledger CRUD + summary
   .env.example
   anni-website.service
   SETUP.md
@@ -132,12 +176,14 @@ docs/
 
 ## Adding a new organizer tab (the intended workflow for Phase 2)
 
-1. Create `client/src/organizer/tabs/your-tab.js` — export `render(user)` returning an HTML string
-2. Import and register it in `client/src/organizer/index.js` → `TAB_RENDERERS`
+1. Create `client/src/organizer/tabs/your-tab.js` — export `render(user)` returning an HTML string, and optionally `mount(container, user)` for interactive wiring after innerHTML is set
+2. Import both in `client/src/organizer/index.js` → add to `TAB_RENDERERS` and `TAB_MOUNTS`
 3. Add entry to `TAB_CONFIG` in `client/src/organizer/lib/tier.js`
-4. Create `server/routes/organizer/your-tab.js` with CRUD routes, import in `server.js`
+4. Create `server/routes/organizer/your-tab.js`, export `registerYourTabRoutes(app, { requireAuth })`, import and call in `server.js`
 
-**No other files need to change.** This is the whole point of the isolation.
+**No other files need to change.**
+
+Note: if the tab has literal static routes AND parameterized `/:id` routes, always register the static ones first (same pitfall as the `/api/auth/logout` vs `/:provider` bug — and the `/todos/reorder` vs `/todos/:id` example).
 
 ---
 
@@ -168,8 +214,8 @@ Invariants:
 |---|---|---|
 | `GET /api/auth/me` | Public | Session user or 401 |
 | `GET /api/user/me` | Required | Full DB user record (organizer uses this) |
-| `GET /api/auth/:provider` | Public | Start OAuth (github/discord/google) |
-| `GET /api/auth/callback/:provider` | Public | OAuth callback → upsert user → redirect `/#/organizer` |
+| `GET /api/auth/:provider?returnTo=` | Public | Start OAuth (github/discord/google); optional `returnTo` URL (validated against ALLOWED_ORIGINS) stored in session |
+| `GET /api/auth/callback/:provider` | Public | OAuth callback → upsert user → redirect to `session.returnTo` or `/#/login` |
 | `GET /api/auth/logout` | Public | Destroy session + clear cookie |
 | `GET /api/health` | Public | Health check + uptime |
 | `GET /api/meta` | Public | `{ devMode, frontendUrl }` |

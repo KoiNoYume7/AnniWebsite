@@ -66,6 +66,37 @@ CREATE TABLE IF NOT EXISTS finance_entries (
   created_at INTEGER DEFAULT (unixepoch())
 );
 
+-- ── Star Citizen Tools (sc.yumehana.dev) ────────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS sc_inventory (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id     TEXT    NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  item_name   TEXT    NOT NULL,
+  category    TEXT    NOT NULL DEFAULT 'cz_loot',  -- e.g. cz_loot, ship_part, consumable
+  quantity    INTEGER NOT NULL DEFAULT 1,
+  notes       TEXT,
+  updated_at  INTEGER DEFAULT (unixepoch()),
+  created_at  INTEGER DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS sc_groups (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  name        TEXT    NOT NULL,
+  owner_id    TEXT    NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invite_code TEXT    NOT NULL UNIQUE,
+  created_at  INTEGER DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS sc_group_members (
+  group_id    INTEGER NOT NULL REFERENCES sc_groups(id) ON DELETE CASCADE,
+  user_id     TEXT    NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role        TEXT    NOT NULL DEFAULT 'member',   -- owner | member
+  joined_at   INTEGER DEFAULT (unixepoch()),
+  PRIMARY KEY (group_id, user_id)
+);
+
+-- ── AI Usage ─────────────────────────────────────────────────────────────────
+
 CREATE TABLE IF NOT EXISTS ai_usage (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

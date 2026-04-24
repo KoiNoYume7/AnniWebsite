@@ -22,7 +22,19 @@
 
 **Spotify (v2.1)**: Live Activity widget in the builder section of the home page. SSE streaming from `/api/spotify/stream` (server polls every 10s, pushes deltas). Widget shows album art with subtle glow, track name (marquee for long titles), artist, animated equalizer + progress bar, and a recently played / top tracks strip with tab toggle. Three states: Now Playing, Paused, Offline — never fully hides. Styled to match site card design (`var(--surface)`, `var(--border)`). A floating dismissible panel (`live-activity-panel.js`) shows the same track on every non-home route.
 
-Next up: **Phase 2** — feature modules (todos, calendar, reminders, finance).
+**Phase 2 (v2.2) complete** — all four organizer feature modules are live:
+- **Todos**: CRUD + list grouping + priority/due-date pills + drag-to-reorder + inline edit
+- **Calendar**: lightweight monthly grid, click-to-create/edit modal, color picker, no external deps
+- **Reminders**: upcoming/due/delivered sections, repeat presets, 60s browser polling + Notification API
+- **Finance**: income/expense ledger, month filter, summary cards, category breakdown bars, CSV export
+
+All tabs: backend routes in `server/routes/organizer/`, `TAB_MOUNTS` lifecycle hook in organizer shell.
+
+**SC Tools / SSO (v2.3)**: Subdomain `sc.yumehana.dev` live. Serves `CZTimers` repo as a pure static site from `/opt/anni/sc`. Isolated SC nav (`anni-nav.js`) — not linked to the main site's nav structure. SSO via session cookie on `.yumehana.dev` domain; SC nav fetches `yumehana.dev/api/auth/me`. `returnTo` OAuth flow: SC Login → main login → back to SC after auth. CORS and `ALLOWED_ORIGINS` include both origins in `server.js`.
+
+**Home page restructure (v2.3)**: Organizer-first hero archived (HTML comment in `home.js`). New order: builder intro + terminal → SC Tools section (with tool cards) → Spotify live activity → featured projects → Discord CTA (disabled). Nav login button changed from "Organizer" → "Account" (navigates to `#/login` account card instead of `#/organizer`).
+
+Next up: **Phase 3** — AI Chat tab (Claude integration, token metering).
 
 ---
 
@@ -117,7 +129,7 @@ CREATE TABLE IF NOT EXISTS ai_usage (
 - [x] **0.4** Open-auth flow — upsert user on every successful OAuth login, whitelist → admin promotion
 - [x] **0.5** Auth middleware — `requireAuth`, `requireSubscriber`
 - [x] **0.6** nginx — generalized `/api/*` proxy
-- [x] **0.7** Post-login redirect → `/#/organizer`
+- [x] **0.7** Post-login redirect → `/#/login` (shows account card with link to organizer; `returnTo` overrides this for cross-domain SSO flows)
 - [x] **0.8** `GET /api/user/me` endpoint — returns full DB user record
 - [x] **0.9** `GET /api/meta` endpoint — returns `devMode` flag + `frontendUrl`
 - [x] **0.10** Dev login bypass — `POST /api/dev/login` (DEV_MODE only), button on login page
@@ -135,42 +147,42 @@ CREATE TABLE IF NOT EXISTS ai_usage (
 
 ---
 
-## Phase 2: Core Organizer Features 🔨 NEXT
+## Phase 2: Core Organizer Features ✅ COMPLETE
 
 Build each tool as a pair of backend CRUD routes + frontend render function.
 **Pattern for every tool**: `GET /api/organizer/:tool`, `POST`, `PATCH /:id`, `DELETE /:id` — all behind `requireAuth`. Response: `{ ok: true, data: [...] }`.
 
 ### 2.1 — Todos
 
-- [ ] Backend routes: list, create, update (title, description, priority, due_date, completed, list_name, sort_order), delete
-- [ ] Frontend: list view grouped by `list_name`, priority + due-date pill styling, overdue highlighting
-- [ ] Drag-to-reorder (update `sort_order` on drop)
-- [ ] "New list" creation inline
+- [x] Backend routes: list, create, update (title, description, priority, due_date, completed, list_name, sort_order), delete
+- [x] Frontend: list view grouped by `list_name`, priority + due-date pill styling, overdue highlighting
+- [x] Drag-to-reorder (update `sort_order` on drop)
+- [x] "New list" creation inline
 
 ### 2.2 — Calendar
 
-- [ ] Backend routes: list events, create, update, delete
-- [ ] Frontend: load FullCalendar via CDN dynamically (`import()` only when tab opens)
-- [ ] Modal for create/edit — title, start/end, all-day toggle, color picker
-- [ ] `eventDrop` → PATCH to update `start_at`/`end_at`
+- [x] Backend routes: list events, create, update, delete
+- [x] Frontend: lightweight monthly grid, click-to-create/edit modal (no FullCalendar CDN — built custom)
+- [x] Modal for create/edit — title, start/end, all-day toggle, color picker
+- [x] `eventDrop` → PATCH to update `start_at`/`end_at`
 
 ### 2.3 — Reminders
 
-- [ ] Backend routes: list, create, update, delete + `GET /api/organizer/reminders/pending`
-- [ ] `node-cron` job (every minute) — marks past-due reminders as `delivered`
-- [ ] Frontend: on organizer load, fetch pending and show toast per undelivered reminder
-- [ ] Repeat cron string support (UI: daily, weekly, custom)
+- [x] Backend routes: list, create, update, delete + `GET /api/organizer/reminders/pending`
+- [x] Browser 60s polling — marks past-due reminders as `delivered` on client
+- [x] Frontend: on organizer load, fetch pending and show toast per undelivered reminder
+- [x] Repeat preset support (UI: daily, weekly, custom)
 
 ### 2.4 — Finance Tracker
 
-- [ ] Backend routes: list entries, create, update, delete + `GET /api/organizer/finance/summary`
-- [ ] Store amounts as cents (`amount_cents`). Summary endpoint calculates totals server-side.
-- [ ] Frontend: inline add form (dollars input → multiply ×100 before POST)
-- [ ] Chart.js via CDN: doughnut (expense categories), bar (6-month income vs. expense)
+- [x] Backend routes: list entries, create, update, delete + `GET /api/organizer/finance/summary`
+- [x] Store amounts as cents (`amount_cents`). Summary endpoint calculates totals server-side.
+- [x] Frontend: inline add form (dollars input → multiply ×100 before POST)
+- [x] Category breakdown bars + month filter + CSV export
 
 ---
 
-## Phase 3: Claude AI Integration 📋 PLANNED
+## Phase 3: Claude AI Integration � NEXT
 
 **Key principle**: API key lives server-side only. Client never sees it. Server enforces per-user token budgets before forwarding to Anthropic.
 
@@ -221,13 +233,14 @@ Build each tool as a pair of backend CRUD routes + frontend render function.
 
 ## Recommended Commit Order
 
-1. `feat/todos` — Phase 2.1
-2. `feat/calendar` — Phase 2.2
-3. `feat/reminders` — Phase 2.3
-4. `feat/finance` — Phase 2.4
-5. `feat/ai-chat` — Phase 3 (grant yourself `subscriber` role in DB for local testing)
-6. `feat/stripe` — Phase 4 (test with Stripe test mode + `stripe listen --forward-to localhost:4000/api/stripe/webhook`)
-7. Polish, export, backups — ongoing
+~~1. `feat/todos` — Phase 2.1~~ ✅
+~~2. `feat/calendar` — Phase 2.2~~ ✅
+~~3. `feat/reminders` — Phase 2.3~~ ✅
+~~4. `feat/finance` — Phase 2.4~~ ✅
+1. `feat/ai-chat` — Phase 3 (grant yourself `subscriber` role in DB for local testing)
+2. `feat/stripe` — Phase 4 (test with Stripe test mode + `stripe listen --forward-to localhost:4000/api/stripe/webhook`)
+3. `feat/sc-loot-tracker` — SC Tools loot tracker frontend (API routes + DB schema already in place)
+4. Polish, export, backups — ongoing
 
 ---
 
