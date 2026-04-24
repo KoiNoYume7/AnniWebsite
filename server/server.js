@@ -14,6 +14,7 @@ import { registerTodoRoutes }  from './routes/organizer/todos.js'
 import { registerEventRoutes }    from './routes/organizer/events.js'
 import { registerReminderRoutes } from './routes/organizer/reminders.js'
 import { registerFinanceRoutes }  from './routes/organizer/finance.js'
+import { registerScRoutes }       from './routes/sc.js'
 
 const app  = express()
 const PORT = process.env.PORT || 4000
@@ -21,6 +22,9 @@ const DEV_MODE = process.env.DEV_MODE === 'true' || process.env.NODE_ENV === 'de
 const FRONTEND = DEV_MODE
   ? (process.env.FRONTEND_URL_DEV || 'http://localhost:3000')
   : (process.env.FRONTEND_URL || 'https://yumehana.dev')
+const SC_FRONTEND = DEV_MODE ? null : 'https://sc.yumehana.dev'
+const ALLOWED_ORIGINS = new Set([FRONTEND, SC_FRONTEND].filter(Boolean))
+const COOKIE_DOMAIN = DEV_MODE ? undefined : '.yumehana.dev'
 const SQLiteStore = connectSQLite3(session)
 const SESSION_DB_DIR = path.resolve('./db')
 if (!fs.existsSync(SESSION_DB_DIR)) {
@@ -202,12 +206,17 @@ app.use(session({
     secure:    'auto',
     sameSite:  'lax',
     maxAge:    7 * 24 * 60 * 60 * 1000,
+    domain:    COOKIE_DOMAIN,
   },
 }))
 
-// CORS — only allow requests from our frontend
+// CORS — allow main site + SC subdomain
 app.use((req, res, next) => {
-  res.setHeader('Access-Control-Allow-Origin',      FRONTEND)
+  const origin = req.headers.origin
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Vary', 'Origin')
+  }
   res.setHeader('Access-Control-Allow-Credentials', 'true')
   res.setHeader('Access-Control-Allow-Methods',     'GET, POST, OPTIONS')
   res.setHeader('Access-Control-Allow-Headers',     'Content-Type')
@@ -257,6 +266,7 @@ registerTodoRoutes(app, { requireAuth })
 registerEventRoutes(app, { requireAuth })
 registerReminderRoutes(app, { requireAuth })
 registerFinanceRoutes(app, { requireAuth })
+registerScRoutes(app, { requireAuth })
 
 // GET /api/auth/logout — MUST be before :provider so it doesn't match as a provider name
 app.get('/api/auth/logout', (req, res) => {
@@ -267,6 +277,7 @@ app.get('/api/auth/logout', (req, res) => {
       httpOnly: true,
       secure: req.secure,
       sameSite: 'lax',
+      domain: COOKIE_DOMAIN,
     })
     res.json({ ok: true })
   })

@@ -22,10 +22,10 @@
     "url_override": null
   },
   {
-    "name": "CZTimers",
+    "name": "SC Tools",
     "icon": "🚀",
-    "description": "Real-time Star Citizen Executive Hangar cycle tracker. Tracks the 3h 05m RED/GREEN/BLACK phase loop with per-light ETAs and phase countdown.",
-    "tags": ["star-citizen", "timer", "vanilla-js"],
+    "description": "Star Citizen toolset at sc.yumehana.dev. Currently: real-time Executive Hangar cycle tracker with per-light ETAs. Expanding to include contested zone loot tracking and group inventory.",
+    "tags": ["star-citizen", "tools", "vanilla-js", "self-hosted"],
     "phase": "Early WIP",
     "status": "wip",
     "featured": true,
