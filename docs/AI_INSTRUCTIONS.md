@@ -105,7 +105,7 @@ client/src/
     nav.js                ← Site navigation
     footer.js             ← Site footer
   pages/                  ← Site pages (one file = one route)
-    home.js               ← Organizer-first hero, reads data/projects.json for featured
+    home.js               ← Builder intro + terminal hero, SC Tools section, Spotify, featured projects (organizer hero archived)
     about.js              ← Reads data/about.json
     projects.js           ← Reads data/projects.json, featured/all toggle
     blog.js               ← Reads data/devlogs.json

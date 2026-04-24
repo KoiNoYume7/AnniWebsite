@@ -42,3 +42,7 @@ Things that aren't on the roadmap yet but are worth tracking. Not commitments �
 ### ~~Discord server invite~~
 
 **Decision: Disabled.** The Discord CTA on the home page is preserved but greyed out with `opacity:0.55; pointer-events:none`. It shows "Coming Soon" instead of a join link. Re-enable it by removing those styles in `home.js` and updating the invite URL when the server is ready.
+
+### ~~Star Citizen toolset subdomain (`sc.yumehana.dev`)~~
+
+**Decision: Implemented (v2.3).** `CZTimers` repo serves a pure static site from `/opt/anni/sc` on the Pi. Isolated from the main site's nav — `anni-nav.js` renders an SC-specific nav bar that references `yumehana.dev` passively but does not share its structure or routing. SSO via `.yumehana.dev` session cookie — SC nav checks `yumehana.dev/api/auth/me`. `returnTo` OAuth flow lets users who click Login on the SC site land back there after authenticating on the main site. Home page now has an SC Tools section. Loot Tracker API routes (`/api/sc/inventory`, `/api/sc/groups`) and DB tables are already in place — frontend for that tool is next.
