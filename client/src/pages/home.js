@@ -132,10 +132,10 @@ export async function renderHome(root) {
               </div>
               <div class="pc-footer">
                 <div class="pc-stats">
-                  <span class="pc-stat">⭐ ${p.stars}</span>
-                  <span class="pc-stat">🍴 ${p.forks}</span>
+                  ${p.stars > 0 ? `<span class="pc-stat">⭐ ${p.stars}</span>` : ''}
+                  ${p.forks > 0  ? `<span class="pc-stat">🍴 ${p.forks}</span>`  : ''}
                 </div>
-                <span class="pc-link">GitHub ↗</span>
+                <span class="pc-link">${p.url && p.url.includes('github.com') ? 'GitHub' : 'Visit'} ↗</span>
               </div>
             </a>`).join('')}
         </div>
