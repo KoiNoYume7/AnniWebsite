@@ -73,7 +73,10 @@ export async function renderHome(root) {
               A growing set of tools for Star Citizen pilots, self-hosted on the same infrastructure.
               No ads, no accounts required to use — just open and fly.
             </p>
-            <a href="https://sc.yumehana.dev" target="_blank" rel="noopener" class="btn btn-primary">Open SC Tools ↗</a>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <a href="https://sc.yumehana.dev" target="_blank" rel="noopener" class="btn btn-primary">Open SC Tools ↗</a>
+              <a href="https://sc.yumehana.dev/what-is-sc.html" target="_blank" rel="noopener" class="btn btn-ghost">What is Star Citizen? →</a>
+            </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:14px">
             ${[

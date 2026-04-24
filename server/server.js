@@ -315,7 +315,10 @@ app.get('/api/auth/:provider', (req, res) => {
     params.set('prompt', 'select_account')
   }
 
-  res.redirect(`${p.authUrl}?${params}`)
+  req.session.save((err) => {
+    if (err) console.error('[oauth start] Session save error:', err)
+    res.redirect(`${p.authUrl}?${params}`)
+  })
 })
 
 // GET /api/auth/callback/:provider — OAuth callback

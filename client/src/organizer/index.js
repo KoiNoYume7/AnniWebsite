@@ -66,8 +66,8 @@ export async function renderOrganizer(root) {
               <p class="organizer-eyebrow">Anni Organizer</p>
               <h1>Centralize todos, time, reminders, money & Claude.</h1>
               <p class="organizer-subtext">
-                Phase 0 + 1 complete — database, auth, and shell are live.
-                Phase 2 feature modules coming next.
+                Todos, Calendar, Reminders, and Finance are live.
+                AI Chat (Phase 3) is next.
               </p>
             </div>
             <div class="organizer-meta">
