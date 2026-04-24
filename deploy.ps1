@@ -28,7 +28,7 @@ $PI_USER   = "akira"
 $PI_HOST   = "yme-04"
 $PI_WEB    = "/opt/anni/www"
 $PI_SERVER = "/opt/anni/server"
-$SC_ROOT   = "C:\Users\akira\CascadeProjects\CZTimers"         # CZTimers repo root
+$SC_ROOT   = "D:\.src\CZTimers"                                   # CZTimers repo root
 $SC_SRC    = "$SC_ROOT\src"                                       # static files to deploy
 $SC_WEB    = "/opt/anni/sc"
 
