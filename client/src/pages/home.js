@@ -13,65 +13,21 @@ export async function renderHome(root) {
   const featured = projectsData.filter(p => p.featured)
 
   root.innerHTML = `
-    <!-- ── Hero: Organizer as the product ── -->
-    <section class="home-hero" style="padding:130px 0 80px;position:relative;overflow:hidden">
-      <div class="wrap">
-        <div class="home-hero-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center">
-
-          <div class="home-hero-copy">
-            <p class="section-eyebrow reveal" style="animation-delay:0s">yumehana.dev</p>
-            <h1 class="reveal" style="font-family:var(--font-head);font-size:clamp(2.4rem,5vw,3.6rem);font-weight:800;letter-spacing:-0.035em;line-height:1.05;margin-bottom:22px;animation-delay:0.08s">
-              One place for todos,<br>time, finance<br>& <span style="color:var(--accent)">Claude.</span>
-            </h1>
-            <p class="reveal home-hero-desc" style="color:var(--muted);font-size:1.02rem;line-height:1.75;max-width:430px;margin-bottom:36px;animation-delay:0.16s">
-              A self-hosted personal life OS — built in public, open to anyone.
-              No SaaS fees, no black boxes.
-            </p>
-            <div class="reveal home-hero-actions" style="display:flex;gap:14px;flex-wrap:wrap;animation-delay:0.24s">
-              <button class="btn btn-primary" onclick="navigate('organizer')">Open Organizer →</button>
-              <button class="btn btn-ghost"   onclick="navigate('projects')">See projects</button>
-            </div>
-            <div class="reveal home-hero-links" style="margin-top:32px;display:flex;gap:24px;animation-delay:0.32s">
-              <a href="https://github.com/KoiNoYume7" target="_blank" rel="noopener"
-                style="color:var(--muted);font-size:0.82rem;font-weight:500;text-decoration:none;transition:color .2s"
-                onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--muted)'">
-                GitHub ↗
-              </a>
-            </div>
-          </div>
-
-          <!-- Feature grid -->
-          <div class="reveal" style="animation-delay:0.2s">
-            <div class="home-feature-grid">
-              ${[
-                { icon: '🗒️', label: 'Todos',     desc: 'Priority lists with drag-to-reorder and Claude-powered daily planning.' },
-                { icon: '📅', label: 'Calendar',  desc: 'FullCalendar with drag-to-reschedule and AI week summaries.' },
-                { icon: '⏰', label: 'Reminders', desc: 'Flexible repeat rules and notifications.' },
-                { icon: '💰', label: 'Finance',   desc: 'Income & expense ledger with Chart.js breakdowns and Claude insights.' },
-                { icon: '✨', label: 'AI Chat',   desc: 'Claude Sonnet streams in-panel with context from all your data.' },
-              ].map(f => `
-                <div class="home-feature-card reveal">
-                  <div class="home-feature-icon">${f.icon}</div>
-                  <div class="home-feature-label">${f.label}</div>
-                  <div class="home-feature-desc">${f.desc}</div>
-                </div>`).join('')}
-            </div>
-          </div>
-
-        </div>
-      </div>
+    <!-- ── ARCHIVED: Organizer hero — hidden, not deleted ── -->
+    <!-- (re-enable by removing display:none when organizer is ready to promote again)
+    <section class="home-hero" style="display:none;padding:130px 0 80px;position:relative;overflow:hidden">
+      ...organizer hero content archived here...
     </section>
+    -->
 
-    <hr class="divider" />
-
-    <!-- ── Builder section: who made this ── -->
-    <section class="section">
+    <!-- ── Builder / intro ── -->
+    <section class="home-hero" style="padding:100px 0 70px;position:relative;overflow:hidden">
       <div class="wrap">
         <div class="home-about-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
 
           <div class="reveal">
-            <p class="section-eyebrow">The builder</p>
-            <h2 class="section-title">Building tools<br class="home-about-br">at <span style="color:var(--accent)">2AM</span>,<br class="home-about-br">fuelled by <span style="color:var(--accent2)">Monster.</span></h2>
+            <p class="section-eyebrow reveal" style="animation-delay:0s">yumehana.dev</p>
+            <h2 class="section-title reveal" style="animation-delay:0.08s">Building tools<br class="home-about-br">at <span style="color:var(--accent)">2AM</span>,<br class="home-about-br">fuelled by <span style="color:var(--accent2)">Monster.</span></h2>
             <p style="color:var(--muted);font-size:0.97rem;line-height:1.78;margin-bottom:28px">
               Cybersecurity trainee from Switzerland. Evenings: self-hosting infrastructure,
               building privacy tools, and pushing commits at timestamps that would concern a doctor.
@@ -81,7 +37,10 @@ export async function renderHome(root) {
                 `<span class="tag">${s}</span>`
               ).join('')}
             </div>
-            <button class="btn btn-ghost" onclick="navigate('about')">Read more →</button>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+              <button class="btn btn-ghost" onclick="navigate('about')">Read more →</button>
+              <a href="https://github.com/KoiNoYume7" target="_blank" rel="noopener" class="btn btn-ghost">GitHub ↗</a>
+            </div>
           </div>
 
           <!-- Terminal -->
@@ -98,13 +57,54 @@ export async function renderHome(root) {
           </div>
 
         </div>
+      </div>
+    </section>
 
-        <!-- ── Live Activity — sits inside the builder context ── -->
-        <div class="home-live-activity reveal" style="animation-delay:0.3s">
+    <hr class="divider" />
+
+    <!-- ── SC Tools ── -->
+    <section class="section-sm">
+      <div class="wrap">
+        <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center">
+          <div>
+            <p class="section-eyebrow">sc.yumehana.dev</p>
+            <h2 class="section-title" style="font-size:clamp(1.6rem,3.5vw,2.4rem)">Star Citizen<br>Tools</h2>
+            <p style="color:var(--muted);font-size:0.97rem;line-height:1.78;margin-bottom:28px">
+              A growing set of tools for Star Citizen pilots, self-hosted on the same infrastructure.
+              No ads, no accounts required to use — just open and fly.
+            </p>
+            <a href="https://sc.yumehana.dev" target="_blank" rel="noopener" class="btn btn-primary">Open SC Tools ↗</a>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:14px">
+            ${[
+              { icon: '⏱', label: 'Hangar Timer',    desc: 'Real-time Executive Hangar cycle tracker — RED / GREEN / BLACK phase ETAs, live.',  live: true  },
+              { icon: '📦', label: 'Loot Tracker',   desc: 'Track contested zone loot per pilot and across your crew. Coming soon.',              live: false },
+              { icon: '👥', label: 'Crew Stats',     desc: 'Group inventory and aggregate haul stats for your org. Coming soon.',                 live: false },
+            ].map(t => `
+              <div class="reveal" style="display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg2)">
+                <span style="font-size:1.3rem;flex-shrink:0">${t.icon}</span>
+                <div>
+                  <div style="font-weight:600;font-size:0.9rem;margin-bottom:3px;display:flex;align-items:center;gap:8px">
+                    ${t.label}
+                    ${t.live ? '<span class="badge-up" style="font-size:0.62rem">Live</span>' : '<span style="font-size:0.68rem;color:var(--muted);font-weight:500">Soon</span>'}
+                  </div>
+                  <div style="color:var(--muted);font-size:0.82rem;line-height:1.6">${t.desc}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider" />
+
+    <!-- ── Live Activity ── -->
+    <section class="section-sm">
+      <div class="wrap">
+        <div class="home-live-activity reveal" style="animation-delay:0.1s">
           <p class="section-eyebrow">Currently vibing to</p>
           <div id="spotify-mount"></div>
         </div>
-
       </div>
     </section>
 
@@ -132,10 +132,10 @@ export async function renderHome(root) {
               </div>
               <div class="pc-footer">
                 <div class="pc-stats">
-                  <span class="pc-stat">⭐ ${p.stars}</span>
-                  <span class="pc-stat">🍴 ${p.forks}</span>
+                  ${p.stars > 0 ? `<span class="pc-stat">⭐ ${p.stars}</span>` : ''}
+                  ${p.forks > 0  ? `<span class="pc-stat">🍴 ${p.forks}</span>`  : ''}
                 </div>
-                <span class="pc-link">GitHub ↗</span>
+                <span class="pc-link">${p.url && p.url.includes('github.com') ? 'GitHub' : 'Visit'} ↗</span>
               </div>
             </a>`).join('')}
         </div>

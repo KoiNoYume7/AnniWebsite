@@ -104,8 +104,8 @@ function projectCard(p, i) {
       </div>
       <div class="pc-footer">
         <div class="pc-stats">
-          <span class="pc-stat">⭐ ${p.stars}</span>
-          <span class="pc-stat">🍴 ${p.forks}</span>
+          ${p.stars > 0 ? `<span class="pc-stat">⭐ ${p.stars}</span>` : ''}
+          ${p.forks > 0  ? `<span class="pc-stat">🍴 ${p.forks}</span>`  : ''}
           ${updated ? `<span class="pc-stat" style="font-size:0.7rem">Updated ${updated}</span>` : ''}
         </div>
         <span class="pc-link">View ↗</span>
