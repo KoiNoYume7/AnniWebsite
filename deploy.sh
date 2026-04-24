@@ -24,6 +24,8 @@ PI_HOST="yme-04"
 PI_WEB="/opt/anni/www"
 PI_SERVER="/opt/anni/server"
 PI_STATS="/opt/anni/stats"
+SC_SRC="${HOME}/CascadeProjects/CZTimers/src"  # path to CZTimers/src on this machine
+SC_WEB="/opt/anni/sc"
 
 # ── Colours ──
 GREEN='\033[0;32m'
@@ -46,17 +48,22 @@ echo ""
 # ── Parse flags ──
 DEPLOY_CLIENT=true
 DEPLOY_SERVER=true
+DEPLOY_SC=true
 SKIP_BUILD=false
 
 for arg in "$@"; do
   case $arg in
-    --client-only) DEPLOY_SERVER=false ;;
-    --server-only) DEPLOY_CLIENT=false; SKIP_BUILD=true ;;
+    --client-only) DEPLOY_SERVER=false; DEPLOY_SC=false ;;
+    --server-only) DEPLOY_CLIENT=false; DEPLOY_SC=false; SKIP_BUILD=true ;;
+    --sc-only)     DEPLOY_CLIENT=false; DEPLOY_SERVER=false; SKIP_BUILD=true ;;
+    --skip-sc)     DEPLOY_SC=false ;;
     --skip-build)  SKIP_BUILD=true ;;
     --help)
       echo "Usage: ./deploy.sh [options]"
       echo "  --client-only   Only deploy frontend"
       echo "  --server-only   Only deploy backend + restart service"
+      echo "  --sc-only       Only deploy CZTimers (sc.yumehana.dev)"
+      echo "  --skip-sc       Skip CZTimers deploy"
       echo "  --skip-build    Skip npm build step"
       exit 0
       ;;
@@ -122,6 +129,21 @@ if $DEPLOY_SERVER; then
   fi
 fi
 
+# ── Deploy CZTimers (sc.yumehana.dev) ──
+if $DEPLOY_SC; then
+  if [ -d "$SC_SRC" ]; then
+    log "Deploying CZTimers to ${PI_HOST}:${SC_WEB}..."
+    ssh "${PI_USER}@${PI_HOST}" "mkdir -p ${SC_WEB}"
+    rsync -az --delete \
+      --exclude='.DS_Store' \
+      "${SC_SRC}/" \
+      "${PI_USER}@${PI_HOST}:${SC_WEB}/"
+    ok "CZTimers deployed → sc.yumehana.dev"
+  else
+    warn "CZTimers source not found at: ${SC_SRC} — skipping"
+  fi
+fi
+
 # ── Deploy stats API if it exists ──
 if ssh "${PI_USER}@${PI_HOST}" "test -f ${PI_STATS}/stats.py" 2>/dev/null; then
   log "Deploying stats API..."
@@ -140,4 +162,5 @@ echo -e "${GREEN}║         Deploy complete! 🚀      ║${NC}"
 echo -e "${GREEN}╚══════════════════════════════════╝${NC}"
 echo ""
 echo -e "  ${CYAN}https://yumehana.dev${NC}"
+echo -e "  ${CYAN}https://sc.yumehana.dev${NC}"
 echo ""

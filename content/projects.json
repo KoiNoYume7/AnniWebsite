@@ -22,6 +22,17 @@
     "url_override": null
   },
   {
+    "name": "CZTimers",
+    "icon": "🚀",
+    "description": "Real-time Star Citizen Executive Hangar cycle tracker. Tracks the 3h 05m RED/GREEN/BLACK phase loop with per-light ETAs and phase countdown.",
+    "tags": ["star-citizen", "timer", "vanilla-js"],
+    "phase": "Early WIP",
+    "status": "wip",
+    "featured": true,
+    "sort_order": 4,
+    "url_override": "https://sc.yumehana.dev"
+  },
+  {
     "name": "AnniWIn11",
     "icon": "🪟",
     "description": "Windows 11 backup & restore tool. Makes re-installing windows way more bearable.",

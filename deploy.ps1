@@ -18,6 +18,8 @@ param(
     [switch]$ClientOnly,
     [switch]$ServerOnly,
     [switch]$SkipBuild,
+    [switch]$ScOnly,
+    [switch]$SkipSc,
     [switch]$Help
 )
 
@@ -26,6 +28,8 @@ $PI_USER   = "akira"
 $PI_HOST   = "yme-04"
 $PI_WEB    = "/opt/anni/www"
 $PI_SERVER = "/opt/anni/server"
+$SC_SRC    = "C:\Users\akira\CascadeProjects\CZTimers\src"   # path to CZTimers/src on this machine
+$SC_WEB    = "/opt/anni/sc"
 
 # ── Colours ──
 function Log   { param($m) Write-Host "> $m" -ForegroundColor Cyan }
@@ -41,11 +45,14 @@ if ($Help) {
     Write-Host "  -ClientOnly   Only deploy frontend"
     Write-Host "  -ServerOnly   Only deploy backend + restart service"
     Write-Host "  -SkipBuild    Skip npm build step"
+    Write-Host "  -ScOnly       Only deploy CZTimers (sc.yumehana.dev)"
+    Write-Host "  -SkipSc       Skip CZTimers deploy"
     exit 0
 }
 
-$DeployClient = -not $ServerOnly
-$DeployServer = -not $ClientOnly
+$DeployClient = -not $ServerOnly -and -not $ScOnly
+$DeployServer = -not $ClientOnly -and -not $ScOnly
+$DeploySc     = -not $SkipSc
 
 if (-not (Get-Command ssh -ErrorAction SilentlyContinue)) { Fail "ssh not found in PATH" }
 if (-not (Get-Command scp -ErrorAction SilentlyContinue)) { Fail "scp not found in PATH" }
@@ -146,6 +153,29 @@ if ($DeployServer) {
     }
 }
 
+# ── Deploy CZTimers (sc.yumehana.dev) ──
+if ($DeploySc) {
+    if (Test-Path $SC_SRC) {
+        Log "Deploying CZTimers to ${PI_HOST}:${SC_WEB}..."
+        Invoke-SSH "mkdir -p ${SC_WEB}"
+        # rsync not always available on Windows; fall back to scp
+        if (Get-Command rsync -ErrorAction SilentlyContinue) {
+            rsync -az --delete --exclude='.DS_Store' `
+                "${SC_SRC}/" `
+                "${PI_USER}@${PI_HOST}:${SC_WEB}/"
+        } else {
+            $scFiles = Get-ChildItem $SC_SRC
+            foreach ($f in $scFiles) {
+                Invoke-SCP $f.FullName $SC_WEB
+            }
+        }
+        if ($LASTEXITCODE -ne 0) { Fail "CZTimers deploy failed" }
+        Ok "CZTimers deployed → sc.yumehana.dev"
+    } else {
+        Warn "CZTimers source not found at: ${SC_SRC} — skipping"
+    }
+}
+
 # ── Done ──
 Write-Host ""
 Write-Host "====================================" -ForegroundColor Green
@@ -153,4 +183,5 @@ Write-Host "           Deploy complete!         " -ForegroundColor Green
 Write-Host "====================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "  https://yumehana.dev" -ForegroundColor Cyan
+Write-Host "  https://sc.yumehana.dev" -ForegroundColor Cyan
 Write-Host ""

@@ -1,5 +1,24 @@
 server {
     listen 80;
+    server_name sc.yumehana.dev;
+
+    root /opt/anni/sc;
+    index index.html;
+
+    access_log /var/log/nginx/sc-access.log;
+    error_log  /var/log/nginx/sc-error.log;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    add_header X-Frame-Options        "SAMEORIGIN"    always;
+    add_header X-Content-Type-Options "nosniff"       always;
+    add_header Referrer-Policy        "strict-origin"  always;
+}
+
+server {
+    listen 80;
     server_name yumehana.dev www.yumehana.dev;
 
     # Static root lives on the SD card so the site stays up
