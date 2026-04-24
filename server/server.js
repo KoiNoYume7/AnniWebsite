@@ -292,6 +292,15 @@ app.get('/api/auth/:provider', (req, res) => {
   const state       = generateState(req.params.provider)
   const callbackUrl = `${FRONTEND}/api/auth/callback/${req.params.provider}`
 
+  // Store returnTo for post-auth redirect (only accept our own origins)
+  const rawReturnTo = req.query.returnTo
+  if (rawReturnTo) {
+    try {
+      const origin = new URL(rawReturnTo).origin
+      if (ALLOWED_ORIGINS.has(origin)) req.session.returnTo = rawReturnTo
+    } catch (_) { /* invalid URL — ignore */ }
+  }
+
   const params = new URLSearchParams({
     client_id:     p.clientId,
     redirect_uri:  callbackUrl,
@@ -373,7 +382,9 @@ app.get('/api/auth/callback/:provider', async (req, res) => {
         return res.redirect(`${FRONTEND}/#/login?error=session_error`)
       }
       console.log(`[${providerName}] Login success:`, req.session.user.name)
-      res.redirect(`${FRONTEND}/#/organizer`)
+      const returnTo = req.session.returnTo || `${FRONTEND}/#/login`
+      delete req.session.returnTo
+      res.redirect(returnTo)
     })
 
   } catch (err) {
