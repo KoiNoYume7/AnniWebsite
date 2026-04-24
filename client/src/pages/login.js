@@ -11,7 +11,7 @@ export async function renderLogin(root) {
     const res = await fetch('/api/auth/me', { credentials: 'include' })
     if (res.ok) {
       const { user } = await res.json()
-      renderLoggedIn(root, user)
+      renderLoggedIn(root, user, returnTo)
       return
     }
   } catch (_) { /* backend not reachable, show login */ }
@@ -110,7 +110,7 @@ export async function renderLogin(root) {
         })
         if (!res.ok) throw new Error('dev login failed')
         const data = await res.json()
-        renderLoggedIn(root, data.user)
+        renderLoggedIn(root, data.user, returnTo)
       } catch (err) {
         devBtn.disabled = false
         devBtn.textContent = 'Use Dev Login →'
@@ -121,7 +121,7 @@ export async function renderLogin(root) {
   }
 }
 
-function renderLoggedIn(root, user) {
+function renderLoggedIn(root, user, returnTo = '') {
   root.innerHTML = `
     <section style="min-height:60vh;display:flex;align-items:center;justify-content:center;padding:60px 20px">
       <div style="width:100%;max-width:420px">
@@ -137,8 +137,8 @@ function renderLoggedIn(root, user) {
             Authenticated via ${user.provider}
           </p>
           <div style="display:flex;flex-direction:column;gap:10px">
-            <button class="btn btn-primary" onclick="navigate('organizer')" style="justify-content:center">
-              Open Organizer →
+            <button class="btn btn-primary" id="login-back-btn" style="justify-content:center">
+              ${returnTo && returnTo.includes('sc.yumehana.dev') ? '← Back to SC Tools' : returnTo ? '← Back' : '← Back to Home'}
             </button>
             <button class="btn btn-ghost" onclick="doLogout()" style="justify-content:center">
               Sign out
@@ -148,6 +148,11 @@ function renderLoggedIn(root, user) {
       </div>
     </section>
   `
+
+  document.getElementById('login-back-btn')?.addEventListener('click', () => {
+    if (returnTo) window.location.href = returnTo
+    else navigate('')
+  })
 
   window.doLogout = async () => {
     try {

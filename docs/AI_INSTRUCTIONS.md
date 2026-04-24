@@ -49,11 +49,22 @@ A separate static site (repo: `CZTimers`, path: `C:\Users\akira\CascadeProjects\
 
 `GET /api/auth/:provider?returnTo=<url>` — server validates the origin against `ALLOWED_ORIGINS` before storing in session. After callback, redirects to `session.returnTo` or `${FRONTEND}/#/login` (default — shows the logged-in account card, not auto-redirect to organizer).
 
-**Important:** The default post-login redirect is now `/#/login`, not `/#/organizer`. This is intentional — the login page shows an account card with a link to the organizer.
+**Important:** The default post-login redirect is now `/#/login`, not `/#/organizer`. The login page (`login.js`) shows an account card. The primary button on that card is a **smart back button** — not an organizer link:
+- If `returnTo` is present and contains `sc.yumehana.dev` → button says "← Back to SC Tools", redirects via `window.location.href`
+- If `returnTo` is present (any other URL) → button says "← Back", redirects via `window.location.href`
+- If no `returnTo` → button says "← Back to Home", calls `navigate('')`
+
+The organizer is **not** directly linked from the logged-in card. It is accessible via:
+1. Navigating to `#/organizer` directly
+2. The `#/anni` secret page (logo ×7) which has an `[EXPERIMENTAL]` card with an organizer link
 
 ### Nav button (main site)
 
 When logged in, the top-right nav button says **"Account"** (not "Organizer") and navigates to `#/login` (the logged-in account view). This is set in `client/src/components/nav.js`.
+
+### Secret page (`#/anni`)
+
+Reached by clicking the nav logo 7 times or entering the Konami code. In addition to the existing flavour content, it now has a dashed-border `[EXPERIMENTAL]` card with an "Open Organizer ↗" button. Implemented in `client/src/effects/easter-eggs.js`.
 
 ### SC Tools key files (in CZTimers repo)
 

@@ -70,10 +70,21 @@ export function registerAnniRoute(routes) {
             ↑↑↓↓←→←→BA · click logo ×7 · you're thorough, I respect it
           </div>
           <button class="btn btn-primary" id="back-to-reality-btn">← back to reality</button>
+
+          <div style="margin-top:40px;padding:20px 24px;border:1px dashed rgba(168,85,247,0.35);border-radius:var(--radius);background:rgba(168,85,247,0.06);max-width:320px;margin-left:auto;margin-right:auto">
+            <div style="font-family:var(--font-mono);font-size:0.62rem;color:var(--accent2);letter-spacing:0.14em;margin-bottom:8px">[ EXPERIMENTAL ]</div>
+            <p style="color:var(--muted);font-size:0.8rem;line-height:1.6;margin-bottom:14px">
+              You looked hard enough. The organizer is behind here — still rough around the edges, but it's real.
+            </p>
+            <button class="btn btn-ghost" id="anni-organizer-btn" style="font-size:0.82rem;width:100%;justify-content:center">Open Organizer ↗</button>
+          </div>
         </div>
       </div>`
     document.getElementById('back-to-reality-btn')?.addEventListener('click', () => {
       window.navigate('')
+    })
+    document.getElementById('anni-organizer-btn')?.addEventListener('click', () => {
+      window.navigate('organizer')
     })
   }
 }
