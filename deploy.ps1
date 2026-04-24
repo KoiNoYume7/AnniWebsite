@@ -28,7 +28,8 @@ $PI_USER   = "akira"
 $PI_HOST   = "yme-04"
 $PI_WEB    = "/opt/anni/www"
 $PI_SERVER = "/opt/anni/server"
-$SC_SRC    = "C:\Users\akira\CascadeProjects\CZTimers\src"   # path to CZTimers/src on this machine
+$SC_ROOT   = "C:\Users\akira\CascadeProjects\CZTimers"         # CZTimers repo root
+$SC_SRC    = "$SC_ROOT\src"                                       # static files to deploy
 $SC_WEB    = "/opt/anni/sc"
 
 # ── Colours ──
@@ -156,6 +157,14 @@ if ($DeployServer) {
 # ── Deploy CZTimers (sc.yumehana.dev) ──
 if ($DeploySc) {
     if (Test-Path $SC_SRC) {
+        # Refresh cfg.dat + latest.json before pushing
+        $updateScript = Join-Path $SC_ROOT 'update-cfg.ps1'
+        if (Test-Path $updateScript) {
+            Log "Updating CZTimers data (cfg + SC version)..."
+            & $updateScript
+            if ($LASTEXITCODE -ne 0) { Warn "update-cfg.ps1 returned non-zero — deploying with existing data" }
+        }
+
         Log "Deploying CZTimers to ${PI_HOST}:${SC_WEB}..."
         Invoke-SSH "mkdir -p ${SC_WEB}"
         # rsync not always available on Windows; fall back to scp
@@ -170,6 +179,8 @@ if ($DeploySc) {
             }
         }
         if ($LASTEXITCODE -ne 0) { Fail "CZTimers deploy failed" }
+        # Ensure nginx (www-data) can read the lib/ directory
+        Invoke-SSH "chmod 755 ${SC_WEB}/lib && chmod 644 ${SC_WEB}/lib/* 2>/dev/null; true"
         Ok "CZTimers deployed → sc.yumehana.dev"
     } else {
         Warn "CZTimers source not found at: ${SC_SRC} — skipping"
