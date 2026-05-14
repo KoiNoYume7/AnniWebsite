@@ -56,7 +56,7 @@ export function registerScRoutes(app, { requireAuth }) {
 
   // GET /api/sc/inventory — own loot list
   app.get('/api/sc/inventory', requireAuth, (req, res) => {
-    const userId = req.session.user.id
+    const userId = req.user.id
     res.json({ ok: true, items: getInventory.all(userId) })
   })
 
@@ -64,7 +64,7 @@ export function registerScRoutes(app, { requireAuth }) {
   app.post('/api/sc/inventory', requireAuth, (req, res) => {
     const { item_name, category = 'cz_loot', quantity = 1, notes = '' } = req.body || {}
     if (!item_name) return res.status(400).json({ ok: false, error: 'item_name required' })
-    const userId = req.session.user.id
+    const userId = req.user.id
 
     const existing = db.prepare(
       `SELECT id FROM sc_inventory WHERE user_id = ? AND item_name = ? AND category = ?`
@@ -80,20 +80,20 @@ export function registerScRoutes(app, { requireAuth }) {
 
   // DELETE /api/sc/inventory/:id — remove an item
   app.delete('/api/sc/inventory/:id', requireAuth, (req, res) => {
-    deleteItem.run(req.params.id, req.session.user.id)
+    deleteItem.run(req.params.id, req.user.id)
     res.json({ ok: true })
   })
 
   // GET /api/sc/groups — groups the user belongs to
   app.get('/api/sc/groups', requireAuth, (req, res) => {
-    res.json({ ok: true, groups: getGroupsForUser.all(req.session.user.id) })
+    res.json({ ok: true, groups: getGroupsForUser.all(req.user.id) })
   })
 
   // POST /api/sc/groups — create a new group
   app.post('/api/sc/groups', requireAuth, (req, res) => {
     const { name } = req.body || {}
     if (!name) return res.status(400).json({ ok: false, error: 'name required' })
-    const userId = req.session.user.id
+    const userId = req.user.id
     const code = crypto.randomBytes(4).toString('hex').toUpperCase()
     const { lastInsertRowid } = insertGroup.run(name, userId, code)
     insertMember.run(lastInsertRowid, userId, 'owner')
@@ -106,7 +106,7 @@ export function registerScRoutes(app, { requireAuth }) {
     if (!invite_code) return res.status(400).json({ ok: false, error: 'invite_code required' })
     const group = getGroupByCode.get(invite_code.trim().toUpperCase())
     if (!group) return res.status(404).json({ ok: false, error: 'Invalid invite code' })
-    const userId = req.session.user.id
+    const userId = req.user.id
     if (isMember.get(group.id, userId)) {
       return res.json({ ok: true, group, already: true })
     }
@@ -116,7 +116,7 @@ export function registerScRoutes(app, { requireAuth }) {
 
   // DELETE /api/sc/groups/:id/leave — leave a group
   app.delete('/api/sc/groups/:id/leave', requireAuth, (req, res) => {
-    const userId = req.session.user.id
+    const userId = req.user.id
     const group = getGroupById.get(req.params.id)
     if (!group) return res.status(404).json({ ok: false, error: 'Group not found' })
     if (group.owner_id === userId) {
@@ -129,7 +129,7 @@ export function registerScRoutes(app, { requireAuth }) {
 
   // GET /api/sc/groups/:id/inventory — combined group loot view
   app.get('/api/sc/groups/:id/inventory', requireAuth, (req, res) => {
-    const userId = req.session.user.id
+    const userId = req.user.id
     if (!isMember.get(req.params.id, userId)) {
       return res.status(403).json({ ok: false, error: 'Not a member' })
     }

@@ -193,7 +193,11 @@
 .blog-card:hover { border-color: var(--border-h); transform: translateY(-3px); box-shadow: var(--shadow); }
 .blog-date    { font-family: var(--font-mono); font-size: 0.72rem; color: var(--muted); margin-bottom: 10px; }
 .blog-title   { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.01em; }
-.blog-excerpt { color: var(--muted); font-size: 0.87rem; line-height: 1.65; }
+.blog-excerpt {
+  color: var(--muted); font-size: 0.87rem; line-height: 1.65;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 .blog-tags    { margin-top: 14px; display: flex; gap: 7px; flex-wrap: wrap; }
 
 /* ── Contact form ── */

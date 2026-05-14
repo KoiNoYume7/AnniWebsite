@@ -1,0 +1,167 @@
+[
+  {
+    "name": "AnniWebsite",
+    "icon": "🌐",
+    "description": "Personal website + AI life organizer. Built with Vite, vanilla JS, self-hosted. Designed from scratch, no templates.",
+    "tags": [
+      "vite",
+      "frontend",
+      "self-hosted",
+      "vanilla-js"
+    ],
+    "phase": "Phase 2",
+    "status": "active",
+    "featured": true,
+    "sort_order": 1,
+    "url": "https://github.com/KoiNoYume7/AnniWebsite",
+    "language": "JavaScript",
+    "stars": 2,
+    "forks": 1,
+    "updated_at": "2026-04-24T10:39:42Z",
+    "github_topics": [
+      "organizer-app",
+      "personal-website",
+      "project-showcase",
+      "self-hosted",
+      "vite"
+    ]
+  },
+  {
+    "name": "AnniWIn11",
+    "icon": "🪟",
+    "description": "Windows 11 backup & restore tool. Makes re-installing windows way more bearable.",
+    "tags": [
+      "windows",
+      "backup",
+      "restore"
+    ],
+    "phase": "Version 0.6.0",
+    "status": "wip",
+    "featured": true,
+    "sort_order": 2,
+    "url": "https://github.com/KoiNoYume7/AnniWIn11",
+    "language": null,
+    "stars": 0,
+    "forks": 0,
+    "updated_at": "2026-05-13T23:37:58.762Z",
+    "github_topics": []
+  },
+  {
+    "name": "AnniProxy",
+    "icon": "🔀",
+    "description": "A self-hosted proxy browser backend. Routes and manages web traffic privately — built for people who take their own infrastructure seriously.",
+    "tags": [
+      "self-hosted",
+      "privacy",
+      "proxy",
+      "backend"
+    ],
+    "phase": "Early WIP",
+    "status": "paused",
+    "featured": false,
+    "sort_order": 3,
+    "url": "https://github.com/KoiNoYume7/AnniProxy",
+    "language": "PowerShell",
+    "stars": 1,
+    "forks": 0,
+    "updated_at": "2026-03-11T15:31:49Z",
+    "github_topics": [
+      "proxy-browser"
+    ]
+  },
+  {
+    "name": "SC Tools",
+    "icon": "🚀",
+    "description": "Star Citizen toolset at sc.yumehana.dev. Currently: real-time Executive Hangar cycle tracker with per-light ETAs. Expanding to include contested zone loot tracking and group inventory.",
+    "tags": [
+      "star-citizen",
+      "tools",
+      "vanilla-js",
+      "self-hosted"
+    ],
+    "phase": "Early WIP",
+    "status": "wip",
+    "featured": true,
+    "sort_order": 4,
+    "url": "https://sc.yumehana.dev",
+    "language": null,
+    "stars": 0,
+    "forks": 0,
+    "updated_at": "2026-05-13T23:37:58.761Z",
+    "github_topics": []
+  },
+  {
+    "name": "AnniAudio",
+    "icon": "📦",
+    "description": "AnniAudio is a fully open-source, system-wide audio processing and routing suite for Windows 11.",
+    "tags": [
+      "api",
+      "audio-routing",
+      "equalizer",
+      "noise-cancellation"
+    ],
+    "phase": null,
+    "status": "unknown",
+    "featured": false,
+    "sort_order": 999,
+    "url": "https://github.com/KoiNoYume7/AnniAudio",
+    "language": "C++",
+    "stars": 1,
+    "forks": 0,
+    "updated_at": "2026-05-13T12:39:30Z",
+    "github_topics": [
+      "api",
+      "audio-routing",
+      "equalizer",
+      "noise-cancellation"
+    ]
+  },
+  {
+    "name": "AnniWin11",
+    "icon": "📦",
+    "description": "Windows 11 backup & restore tool",
+    "tags": [
+      "automation",
+      "backup",
+      "restore",
+      "windows11"
+    ],
+    "phase": null,
+    "status": "unknown",
+    "featured": false,
+    "sort_order": 999,
+    "url": "https://github.com/KoiNoYume7/AnniWin11",
+    "language": "PowerShell",
+    "stars": 0,
+    "forks": 0,
+    "updated_at": "2026-05-05T11:27:06Z",
+    "github_topics": [
+      "automation",
+      "backup",
+      "restore",
+      "windows11"
+    ]
+  },
+  {
+    "name": "KoiNoYume7",
+    "icon": "📦",
+    "description": "Config files for my GitHub profile.",
+    "tags": [
+      "config",
+      "github-config"
+    ],
+    "phase": null,
+    "status": "unknown",
+    "featured": false,
+    "sort_order": 999,
+    "url": "https://github.com/KoiNoYume7/KoiNoYume7",
+    "language": null,
+    "stars": 0,
+    "forks": 0,
+    "updated_at": "2026-04-17T13:06:43Z",
+    "github_topics": [
+      "config",
+      "github-config"
+    ]
+  }
+]

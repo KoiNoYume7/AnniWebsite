@@ -15,14 +15,14 @@ export async function renderBlog(root, slug = '') {
           Build notes, setup guides, and the occasional midnight thought.
         </p>
 
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px" id="blog-grid">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:20px;align-items:start" id="blog-grid">
           ${devlogsData.map((post, i) => `
             <a class="blog-card reveal" style="animation-delay:${i * 0.08}s"
                href="#/blog/${post.slug}" onclick="navigate('blog/${post.slug}');return false">
               <div class="blog-date">${formatDate(post.date)}</div>
               <div class="blog-title">${post.title}</div>
               ${post.subtitle ? `<div style="font-size:0.82rem;color:var(--accent);margin-bottom:6px">${post.subtitle}</div>` : ''}
-              <div class="blog-excerpt">${post.excerpt}</div>
+              <div class="blog-excerpt">${escapeHtml(post.excerpt)}</div>
               <div class="blog-tags">
                 ${post.tags.map(t => `<span class="tag">${t}</span>`).join('')}
               </div>
@@ -109,6 +109,14 @@ function simpleMarkdown(md) {
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\n\n/g, '</p><p>')
     .replace(/^/, '<p>').replace(/$/, '</p>')
+}
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }
 
 function formatDate(d) {

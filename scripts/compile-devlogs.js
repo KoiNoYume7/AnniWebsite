@@ -52,13 +52,14 @@ function main() {
     })
   }
 
-  // Sort by sort_order from config (config is already ordered, but be explicit)
+  // Sort by date descending (newest first), then sort_order descending as tiebreaker
   const configOrder = new Map(config.map((e, i) => [e.slug, e.sort_order ?? i]))
   posts.sort((a, b) => {
+    const dateDiff = new Date(b.date) - new Date(a.date)
+    if (dateDiff !== 0) return dateDiff
     const oa = configOrder.get(a.slug) ?? 999
     const ob = configOrder.get(b.slug) ?? 999
-    if (oa !== ob) return oa - ob
-    return new Date(b.date) - new Date(a.date)
+    return ob - oa
   })
 
   // Write output

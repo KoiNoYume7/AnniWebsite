@@ -1,209 +1,112 @@
 # AnniWebsite — Pi Setup Guide
 
-Full one-time setup for the Pi. If you're just pushing code changes,
-use `deploy.sh` / `deploy.ps1` from the repo root instead.
+For initial Pi setup or first-time deployment.
+For day-to-day deploys, use `deploy.ps1` from the repo root.
+For full infra reference (all services, ports, nginx, OAuth), see **`AnniCore/INFRA.md`**.
 
 ---
 
 ## Overview
 
-The site runs on a Raspberry Pi 4, split across the SD card and an
-external storage drive:
-
 ```
-/opt/anni/                   # SD card — always available
-├── www/                     # Built frontend (Vite output)
-└── server/                  # Node/Express backend
-    ├── server.js
-    ├── routes/
-    ├── db/
-    │   ├── db.js
-    │   ├── schema.sql
-    │   ├── sessions.db      # session store (local to SD)
-    │   └── organizer.db ──► symlink to storage drive
-    └── .env
-
-/srv/storage/AnniWebsite/    # External USB drive (hot-pluggable)
-└── server/db/organizer.db   # real file lives here
+/opt/anni/website/       SD card — Node/Express backend (port 4000)
+/opt/anni/website-www/   SD card — built Vite frontend
+/srv/storage/AnniWebsite/sc.db   external drive — SC loot DB
 ```
 
-The backend listens on `127.0.0.1:4000` and nginx proxies
-`yumehana.dev/api/*` to it. Only user data (`organizer.db`) lives
-on the storage drive — so unplugging the drive degrades the
-organizer but keeps the rest of the site up.
+Auth (OAuth, sessions, users) is fully owned by **AnniCore** at `auth.yumehana.dev`.
+AnniWebsite proxies `/api/auth/*` to AnniCore and verifies sessions by calling
+`AnniCore /api/auth/me` per request.
 
 ---
 
-## Step 1 — Create the OAuth Apps
+## Step 1 — OAuth app setup
 
-### GitHub
-1. Go to https://github.com/settings/developers
-2. Click **OAuth Apps** → **New OAuth App**
-3. Fill in:
-   - Application name: `AnniWebsite`
-   - Homepage URL: `https://yumehana.dev`
-   - Authorization callback URL: `https://yumehana.dev/api/auth/callback/github`
-4. Click **Register application**
-5. Copy **Client ID** and generate a **Client Secret** → save both
-
-Find your GitHub user ID:
-```bash
-curl https://api.github.com/users/KoiNoYume7
-# Look for the "id" field — it's a number like 12345678
-```
+OAuth is configured in AnniCore, not here. See `AnniCore/INFRA.md` → OAuth Apps.
 
 ---
 
-### Discord
-1. Go to https://discord.com/developers/applications
-2. Click **New Application** → name it `AnniWebsite`
-3. Go to **OAuth2** in the left sidebar
-4. Under **Redirects**, click **Add Redirect**:
-   - `https://yumehana.dev/api/auth/callback/discord`
-5. Copy **Client ID** and **Client Secret** from the OAuth2 page
+## Step 2 — Pi directory layout
 
-Find your Discord user ID:
-1. Open Discord → Settings → Advanced → Enable **Developer Mode**
-2. Right-click your own username anywhere → **Copy User ID**
-
----
-
-### Google
-1. Go to https://console.cloud.google.com
-2. Create a new project (e.g. `AnniWebsite`) or use an existing one
-3. Go to **APIs & Services** → **OAuth consent screen**
-   - User type: **External**
-   - Fill in app name, your email, save
-   - Under **Scopes**: add `email`, `profile`, `openid`
-   - Under **Test users**: add your Google email
-4. Go to **APIs & Services** → **Credentials**
-5. Click **Create Credentials** → **OAuth 2.0 Client ID**
-   - Application type: **Web application**
-   - Name: `AnniWebsite`
-   - Authorized redirect URIs: `https://yumehana.dev/api/auth/callback/google`
-6. Copy **Client ID** and **Client Secret**
-
----
-
-## Step 2 — Create the Pi directory layout
-
-On the Pi:
+Run this once on the Pi, or run `AnniCore/migrate-pi.ps1` which handles all of it:
 
 ```bash
-sudo mkdir -p /opt/anni/www /opt/anni/server/db
+sudo mkdir -p /opt/anni/website/db /opt/anni/website-www
 sudo chown -R akira:akira /opt/anni
 
-# Storage drive — where the organizer DB lives
-sudo mkdir -p /srv/storage/AnniWebsite/server/db
+# SC DB on storage drive
+sudo mkdir -p /srv/storage/AnniWebsite
 sudo chown -R akira:akira /srv/storage/AnniWebsite
-
-# Symlink the organizer DB into the SD card tree so db.js can open it
-# at the hardcoded path. If the drive is unplugged the symlink is
-# dangling and the backend enters degraded mode.
-ln -sf /srv/storage/AnniWebsite/server/db/organizer.db \
-       /opt/anni/server/db/organizer.db
 ```
 
-Then from your dev machine push the code:
-
-```bash
-./deploy.sh         # Linux/macOS
-.\deploy.ps1        # Windows
+Then from your dev machine:
+```powershell
+.\deploy.ps1   # copies server/ to /opt/anni/website, builds + deploys frontend
 ```
-
-The first deploy will copy `server/` to `/opt/anni/server/` and install
-Node dependencies. You still need to create `.env` by hand before the
-service will start.
 
 ---
 
 ## Step 3 — Configure .env
 
-On the Pi:
-
 ```bash
-cd /opt/anni/server
+cd /opt/anni/website
 cp .env.example .env
 nano .env
 ```
 
-Fill in all values. Generate `SESSION_SECRET`:
-```bash
-node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-```
+Required values:
+- `PORT=4000`
+- `ANNI_CORE_URL=http://127.0.0.1:4200`
+- `CONTACT_DISCORD_WEBHOOK_URL=...`
+- `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, `SPOTIFY_REFRESH_TOKEN`
 
-Lock down the file:
 ```bash
 chmod 600 .env
 ```
 
-**Never put `.env` on the storage drive.** Deploy scripts preserve the
-SD-card copy, which is what you want.
-
 ---
 
-## Step 4 — Install systemd services
+## Step 4 — systemd service
 
 ```bash
-sudo cp /opt/anni/server/anni-website.service /etc/systemd/system/
+sudo cp /opt/anni/website/anni-website.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now anni-website
-
-# Check
 sudo systemctl status anni-website
 sudo journalctl -u anni-website -f
 ```
 
 ---
 
-## Step 5 — Configure nginx
+## Step 5 — nginx
 
 ```bash
-sudo cp /opt/anni/server/../nginx/yumehana.dev.nginx \
+sudo cp /path/to/AnniWebsite/nginx/yumehana.dev.nginx \
         /etc/nginx/sites-available/yumehana.dev
 sudo ln -sf /etc/nginx/sites-available/yumehana.dev \
             /etc/nginx/sites-enabled/yumehana.dev
-sudo nginx -t
-sudo systemctl reload nginx
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-The nginx config serves `/opt/anni/www` as the document root and logs
-to `/var/log/nginx/anni-{access,error}.log`. `X-Forwarded-Proto` is
-taken from Cloudflare's header so session cookies get the `Secure`
-flag correctly.
+Nginx serves `/opt/anni/website-www` as doc root and proxies `/api/*` to `:4000`.
 
 ---
 
-## Step 6 — Storage drive auto-mount (optional but recommended)
+## Step 6 — Test
 
-If you want the storage drive to mount automatically on hot-plug, set
-up the systemd mount unit + udev rule — see the Pi's
-`/etc/udev/rules.d/99-anni-automount.rules` for the current working
-config. Without this, you need to `sudo systemctl start srv-storage.mount`
-after plugging the drive back in.
+1. Visit `https://yumehana.dev` — site loads
+2. Visit `https://auth.yumehana.dev` — AnniCore login page
+3. Log in → session cookie set on `.yumehana.dev`
+4. `https://yumehana.dev/api/auth/me` → returns your user
 
-When the drive is unmounted, the organizer tab goes into "under
-maintenance" mode but login, home, blog, projects, and contact all keep
-working.
-
----
-
-## Step 7 — Test it
-
-1. Visit `https://yumehana.dev/#/login`
-2. Click **Continue with GitHub**
-3. Authorize on GitHub
-4. You should be redirected to `#/organizer` logged in
-
-If something goes wrong:
 ```bash
-sudo journalctl -u anni-website -f         # live backend logs
-sudo tail -f /var/log/nginx/anni-error.log # nginx errors
+sudo journalctl -u anni-website -f
+sudo tail -f /var/log/nginx/anni-error.log
 ```
 
 ---
 
-## UFW — no extra ports needed
+## UFW
 
-The backend binds loopback only (`127.0.0.1:4000`), so no firewall
-rules are required for it. nginx proxies `/api/*` internally.
+Backend binds `127.0.0.1:4000` — no extra firewall rules needed.
+nginx proxies all `/api/*` internally.
